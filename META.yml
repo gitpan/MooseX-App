@@ -1,5 +1,5 @@
 ---
-abstract: 'write user-friendly command line apps with even less suffering'
+abstract: 'Write user-friendly command line apps with even less suffering'
 author:
   - 'Maroš Kollár'
 build_requires:
@@ -31,8 +31,9 @@ requires:
   Path::Class: 0
   Pod::Elemental: 0
   String::CamelCase: 0
+  namespace::autoclean: 0
   perl: 5.10.0
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://github.com/maros/MooseX-App.git
-version: 1.00
+version: 1.01

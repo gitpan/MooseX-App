@@ -5,6 +5,7 @@ package MooseX::App::Plugin::BashCompletion;
 use 5.010;
 use utf8;
 
+use namespace::autoclean;
 use Moose::Role;
 
 sub plugin_metaroles {
@@ -36,7 +37,7 @@ __END__
 
 =head1 NAME
 
-MooseX::App::Plugin::BashCompletion - Bash completion for your MooseX::App appications
+MooseX::App::Plugin::BashCompletion - Bash completion for your MooseX::App applications
 
 =head1 SYNOPSIS
 

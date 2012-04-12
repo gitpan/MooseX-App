@@ -5,6 +5,7 @@ package MooseX::App::Plugin::Color;
 use 5.010;
 use utf8;
 
+use namespace::autoclean;
 use Moose::Role;
 
 sub plugin_metaroles {
@@ -23,7 +24,7 @@ __END__
 
 =head1 NAME
 
-MooseX::App::Plugin::Color - Colorful output for your MooseX::App appications
+MooseX::App::Plugin::Color - Colorful output for your MooseX::App applications
 
 =head1 SYNOPSIS
 

@@ -5,6 +5,7 @@ package MooseX::App::Plugin::Config;
 use 5.010;
 use utf8;
 
+use namespace::autoclean;
 use Moose::Role;
 use MooseX::App::Role;
 
@@ -111,7 +112,7 @@ __END__
 
 =head1 NAME
 
-MooseX::App::Plugin::Config - Config files your MooseX::App appications
+MooseX::App::Plugin::Config - Config files your MooseX::App applications
 
 =head1 SYNOPSIS
 

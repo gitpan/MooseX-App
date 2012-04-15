@@ -23,10 +23,10 @@ sub init_meta {
         for             => $meta,
         class_metaroles => {
             class           => ['MooseX::App::Meta::Role::Class::Command'],
-            attribute       => ['MooseX::App::Meta::Role::Attribute'],
+            attribute       => ['MooseX::App::Meta::Role::Attribute','MooseX::Getopt::Meta::Attribute::Trait'],
         },
         role_metaroles => {
-            attribute       => ['MooseX::App::Meta::Role::Attribute'],
+            attribute       => ['MooseX::App::Meta::Role::Attribute','MooseX::Getopt::Meta::Attribute::Trait'],
         },
     );
     
@@ -67,7 +67,7 @@ MooseX::App::Command - Load command class metaclasses
  
  has 'testattr' => (
     isa             => 'rw',
-    command_tags    => [qw(Important! Nice))],
+    cmd_tags        => [qw(Important! Nice))],
  );
  
  command_short_description 'This is a short description';
@@ -83,7 +83,9 @@ features such as:
 
 =item * Setting the command documentation manually via C<command_short_description> and C<command_long_description>
 
-=item * Adding the C<command_tags> option to attributes
+=item * Adding the C<cmd_tags> option to attributes
+
+=item * Adding all attributes available in L<MooseX::Getopt::Meta::Attribute::Trait> such as C<cmd_flag> nad C<cmd_aliases>.
 
 =back
 

@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-MooseX::App::WritingPlugings - Writing plugins for MooseX::App
+MooseX::App::WritingPlugins - Writing plugins for MooseX::App
 
 =head1 SYNOPSIS
 
@@ -58,8 +58,8 @@ It accepts the following keys:
 =head1 METACLASSES
 
 Most of MooseX-App behaviour is implemented in metaclass roles. When writing
-plugings you will most likely need to alter/augument the behviour of these
-roles.
+plugins you will most likely need to alter/augument the behaviour of these
+roles. Implementation details can be found in the respective packages.
 
 =over
 
@@ -67,7 +67,7 @@ roles.
 
 =item * L<MooseX::App::Meta::Role::Class::Command>
 
-=item * L<MooseX::App::Meta::Role::Attribute>
+=item * L<MooseX::App::Meta::Role::Attribute::Base>
 
 =back
 

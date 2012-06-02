@@ -8,7 +8,7 @@ use utf8;
 use namespace::autoclean;
 use Moose;
 use MooseX::App::Command;
-with qw(MooseX::Getopt);
+#with qw(MooseX::Getopt);
 
 command_short_description q(Bash completion automator);
 
@@ -17,15 +17,18 @@ sub bash_completion {
     
     my %command_map;
     my $app_meta        = $app->meta;
-    my %commands        = $app_meta->commands;
-    my $command_list    = join (' ', keys %commands);
+    my $commands        = $app_meta->app_commands;
+    my $command_list    = join (' ', keys %{$commands});
     my $package         = __PACKAGE__;
     my $prefix          = $app_meta->app_base;
     $prefix =~ tr/./_/;
     
-    while (my ($command,$command_class) = each %commands) {
+    while (my ($command,$command_class) = each %$commands) {
         Class::MOP::load_class($command_class);
-        $command_map{$command} = [ $command_class->_attrs_to_options ];
+        my @attributes = $app_meta->command_usage_attributes_raw($command_class->meta);
+        $command_map{$command} = [ 
+            map { $_->[0] } @attributes
+        ];
     }
     
     print <<"EOT";
@@ -47,7 +50,7 @@ EOT
  
     while (my ($c, $o) = each %command_map) {
         print "_${prefix}_macc_$c() {\n    _compreply \"",
-            join(" ", map {"--" . $_->{name}} @$o),
+            join(" ", @$o),
                 "\"\n}\n\n";
     }
  
@@ -72,7 +75,7 @@ _${prefix}_macc() {
  
 EOT
  
-    print "complete -o default -F _${prefix}_macc ", $app_meta->app_base, "\n";
+    return "complete -o default -F _${prefix}_macc ". $app_meta->app_base. "\n";
 }
 
 1;

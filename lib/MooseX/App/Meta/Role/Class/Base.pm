@@ -30,6 +30,16 @@ has 'app_base' => (
     default     => sub { Path::Class::File->new($0)->basename },
 );
 
+has 'app_commands' => (
+    is          => 'rw',
+    isa         => 'HashRef[Str]',
+    traits      => ['Hash'],
+    handles     => {
+        command_register    => 'set',   
+    },
+    lazy_build  => 1,
+);
+
 sub _build_app_messageclass {
     my ($self) = @_;
     return 'MooseX::App::Message::Block'
@@ -40,13 +50,54 @@ sub _build_app_namespace {
     return $self->name;
 }
 
-sub matching_commands {
+sub _build_app_commands {
+    my ($self) = @_;
+    
+    my $mpo = Module::Pluggable::Object->new(
+        search_path => [ $self->app_namespace ],
+    );
+    
+    my %return;
+    foreach my $command_class ($mpo->plugins) {
+        my $plugin_class_name =  substr($command_class,length($self->app_namespace)+2);
+        next
+            if $plugin_class_name =~ m/::/;
+        my $command = MooseX::App::Utils::class_to_command($command_class,$self->app_namespace);
+        $return{$command} = $command_class;
+    }
+    
+    return \%return;
+}
+
+sub proto_command {
+    my ($self,$command_class) = @_;
+    
+    my $opt_parser = Getopt::Long::Parser->new( 
+        config => [ qw( no_auto_help pass_through ) ] 
+    );
+    my $result = {};
+    $opt_parser->getoptions(
+        $self->proto_options($result)
+    );
+    return $result;
+}
+
+sub proto_options {
+    my ($self,$result) = @_;
+    
+    $result->{help} = 0;
+    return (
+        "help|usage|?"      => \$result->{help},
+    );
+}
+
+sub command_matching {
     my ($self,$command) = @_;
     
-    my %commands = $self->commands;
+    my $commands = $self->app_commands;
     
     # Exact match
-    if (defined $commands{$command}) {
+    if (defined $commands->{$command}) {
         return $command;
     # Fuzzy match
     } else {
@@ -55,7 +106,7 @@ sub matching_commands {
         my $lc_command = lc($command);
         
         # Compare all commands to find matching candidates
-        foreach my $command_name (keys %commands) {
+        foreach my $command_name (keys %$commands) {
             my $lc_command_name = lc($command_name);
             if ($lc_command eq $lc_command_name) {
                 return $command_name;
@@ -76,20 +127,20 @@ sub command_message {
     return $messageclass->new(@args);
 }
 
-sub commands {
-    my ($self) = @_;
+sub command_usage_attributes_list {
+    my ($self,$metaclass) = @_;
     
-    my $mpo = Module::Pluggable::Object->new(
-        search_path => [ $self->app_namespace ],
-    );
+    $metaclass ||= $self;
     
-    my %return;
-    foreach my $command_class ($mpo->plugins) {
-        my $command = MooseX::App::Utils::class_to_command($command_class,$self->app_namespace);
-        $return{$command} = $command_class;
+    my @return;
+    # TODO order by insertion order
+    foreach my $attribute ($metaclass->get_all_attributes) {
+        next
+            unless $attribute->does('AppOption');
+        push(@return,$attribute);
     }
     
-    return %return;
+    return @return;
 }
 
 sub command_usage_attributes_raw {
@@ -98,9 +149,7 @@ sub command_usage_attributes_raw {
     $metaclass ||= $self;
     
     my @attributes;
-    foreach my $attribute ($metaclass->get_all_attributes) {
-        next
-            if $attribute->does('NoGetopt');
+    foreach my $attribute ($self->command_usage_attributes_list($metaclass)) {
         
         my ($attribute_name,$attribute_description) = $self->command_usage_attribute_detail($attribute);
         
@@ -262,9 +311,9 @@ sub command_usage_description {
 sub command_class_to_command {
     my ($self,$command_class) = @_;
     
-    my %commands = $self->commands;
-    foreach my $element (keys %commands) {
-        if ($command_class eq $commands{$element}) {
+    my $commands = $self->app_commands;
+    foreach my $element (keys %$commands) {
+        if ($command_class eq $commands->{$element}) {
             return $element;
         }
     }
@@ -294,9 +343,9 @@ sub command_usage_global {
     my @commands;
     push(@commands,['help','Prints this usage information']);
     
-    my %commands = $self->commands;
+    my $commands = $self->app_commands;
     
-    while (my ($command,$class) = each %commands) {
+    while (my ($command,$class) = each %$commands) {
         Class::MOP::load_class($class);
         my $description;
         $description = $class->meta->command_short_description
@@ -342,7 +391,8 @@ MooseX::App::Meta::Role::Class::Base - Meta class role for application base clas
 =head1 DESCRIPTION
 
 This meta class role will automatically be applied to the application base
-class.
+class. This documentation is only of interest if you intent to write
+plugins for MooseX-App.
 
 =head1 ACCESSORS
 
@@ -383,6 +433,12 @@ Generates a message object (based on L<app_messageclass>)
 
 Returns a message object containing the attribute documentation for a given
 meta class.
+
+=head2 command_usage_attributes_list
+
+ my @attributes = $meta->command_usage_attributes($metaclass);
+
+Returns a list of attributes/command options.
 
 =head2 command_usage_attributes_raw
 
@@ -434,15 +490,15 @@ Returns a list of messages containing the documentation for the application.
 
 Returns a message containing the basic usage documentation
 
-=head2 commands
+=head2 app_commands
 
- my %commands = $meta->commands;
+ my $commands = $meta->app_commands;
 
-Returns a list/hash of command name and command class pairs.
+Returns a hashref of command name and command class.
 
-=head2 matching_commands
+=head2 command_matching
 
- my @commands = $meta->matching_commands($user_command_input);
+ my @commands = $meta->command_matching($user_command_input);
 
 Returns a list of command names matching the user input
 

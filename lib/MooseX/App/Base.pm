@@ -12,6 +12,14 @@ with qw(MooseX::Getopt);
 use MooseX::App::Message::Envelope;
 use List::Util qw(max);
 
+has 'help_flag' => (
+    is              => 'ro', isa => 'Bool',
+    traits          => ['AppOption','Getopt'],
+    cmd_flag        => 'help',
+    cmd_aliases     => [ qw(usage ?) ],
+    documentation   => 'Prints this usage information.',
+);
+
 sub new_with_command {
     my ($class,%args) = @_;
     
@@ -36,7 +44,7 @@ sub new_with_command {
         );
     # Looks like a command
     } else {
-        my @candidates = $meta->matching_commands($first_argv);
+        my @candidates = $meta->command_matching($first_argv);
         # No candidates
         if (scalar @candidates == 0) {
             return MooseX::App::Message::Envelope->new(
@@ -69,8 +77,8 @@ sub initialize_command {
     
     my $meta = $class->meta;
     
-    my %commands = $meta->commands;
-    my $command_class = $commands{$command_name};
+    my $commands = $meta->app_commands;
+    my $command_class = $commands->{$command_name};
     
     eval {
         Class::MOP::load_class($command_class);
@@ -86,7 +94,8 @@ sub initialize_command {
         return;
     }
     
-    my $proto_result = $class->proto_command($command_class);
+    my $command_meta = $command_class->meta;
+    my $proto_result = $meta->proto_command($command_class);
     
     # TODO return some kind of null class object
     return
@@ -115,39 +124,21 @@ sub initialize_command {
             return $object;
         };
         if (my $error = $@) {
-            $error =~ s/\n.+//s;
             chomp $error;
+            $error =~ s/\n.+//s;
+            $error =~ s/in call to \(eval\)$//;
+            
             return MooseX::App::Message::Envelope->new(
                 $meta->command_message(
                     header          => $error,
                     type            => "error",
                 ),
-                $meta->command_usage_command($command_class->meta),
+                $meta->command_usage_command($command_meta),
             );
         }
         # TODO exitval 0 ..  ok , 1 .. error, 2..fatal error
         return $command_object;
     }
-}
-
-sub proto_command {
-    my ($class,$command_class) = @_;
-    
-    my $opt_parser = Getopt::Long::Parser->new( config => [ qw( no_auto_help pass_through ) ] );
-    my $result = {};
-    $opt_parser->getoptions(
-        $class->proto_options($result)
-    );
-    return $result;
-}
-
-sub proto_options {
-    my ($class,$result) = @_;
-    
-    $result->{help} = 0;
-    return (
-        "help|usage|?"      => \$result->{help},
-    );
 }
 
 1;

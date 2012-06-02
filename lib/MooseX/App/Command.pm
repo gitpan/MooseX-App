@@ -9,7 +9,8 @@ use Moose ();
 use Moose::Exporter;
 
 Moose::Exporter->setup_import_methods(
-    with_meta => [ 'command_short_description', 'command_long_description' ],
+    with_meta => [ 'command_short_description', 'command_long_description', 'option'],
+    as_is     => ['_compute_getopt_attrs'],
     also      => 'Moose',
 );
 
@@ -23,10 +24,10 @@ sub init_meta {
         for             => $meta,
         class_metaroles => {
             class           => ['MooseX::App::Meta::Role::Class::Command'],
-            attribute       => ['MooseX::App::Meta::Role::Attribute','MooseX::Getopt::Meta::Attribute::Trait'],
+            attribute       => ['MooseX::App::Meta::Role::Attribute::Base','MooseX::Getopt::Meta::Attribute::Trait'],
         },
         role_metaroles => {
-            attribute       => ['MooseX::App::Meta::Role::Attribute','MooseX::Getopt::Meta::Attribute::Trait'],
+            attribute       => ['MooseX::App::Meta::Role::Attribute::Base','MooseX::Getopt::Meta::Attribute::Trait'],
         },
     );
     
@@ -48,6 +49,20 @@ sub command_long_description($) {
     return $meta->command_long_description($description);
 }
 
+sub option {
+    goto &MooseX::App::option;
+}
+
+# Dirty hack to hide private attributes from MooseX-Getopt
+sub _compute_getopt_attrs {
+    my ($class) = @_;
+
+    return
+        sort { $a->insertion_order <=> $b->insertion_order }
+        grep { $_->does('AppOption') } 
+        $class->meta->get_all_attributes
+}
+
 1;
 
 __END__
@@ -65,12 +80,13 @@ MooseX::App::Command - Load command class metaclasses
  use Moose; # optional
  use MooseX::App::Command
  
- has 'testattr' => (
+ option 'testattr' => (
     isa             => 'rw',
     cmd_tags        => [qw(Important! Nice))],
  );
  
  command_short_description 'This is a short description';
+ command_long_description 'This is a much longer description yadda yadda';
 
 =head1 DESCRIPTION
 

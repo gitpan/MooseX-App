@@ -58,8 +58,10 @@ sub _command_description_predicate {
     unless ($attribute->has_value($self)) {
         $self->_build_command_pod($field);
     }
+    
+    my $value = $attribute->get_value($self); 
         
-    return (defined $attribute->get_value($self) ? 1:0);
+    return (defined $value && $value ? 1:0);
 }
 
 sub _build_command_pod {
@@ -189,6 +191,8 @@ MooseX::App::Meta::Role::Class::Command - Meta class role for command classes
 =head1 DESCRIPTION
 
 This meta class role will automatically be applied to all command classes.
+This documentation is only of interest if you intent to write plugins for 
+MooseX-App.
 
 =head1 ACCESSORS
 

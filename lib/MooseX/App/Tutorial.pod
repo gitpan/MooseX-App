@@ -14,7 +14,7 @@ To create a simple command-line application with MooseX::App you need
 
 =item * Multiple command classes
 
-=item * and a invocation script
+=item * and an invocation script
 
 =back
 
@@ -42,11 +42,17 @@ The base class can be customized by
   package MyApp;
   use MooseX::App qw(Config); # Loads the Config plugin
   
-  has 'some_global_option' => (
+  option 'some_global_option' => (
       is                => 'rw',
       isa               => 'Str',
       documentation     => q[Some important global option],
   );
+  
+  # This will not be exposed
+  has 'private_option' => (
+      is              => 'rw',
+      isa             => 'Str',
+  ); 
   
   1;
 
@@ -74,7 +80,7 @@ extend the base class with your command class.
   use MooseX::App::Command;
   extends qw(MyApp);
 
-If you want to provide a description of what the command does to the users
+If you want to provide a description for each command to the users
 you need to add C<command_short_description> and C<command_long_description>
 information. The command descriptions may contain linebreaks.
 
@@ -86,14 +92,16 @@ The NAME section will become the short description and the DESCRIPTION
 or OVERVIEW section the long description.
 
 Attributes can be documented using the Moose built-in C<documentation> option
-as well as C<command_tags> which is defined by MooseX-App. 
+as well as C<cmd_tags> which is defined by MooseX-App. Additionally the
+C<cmd_flag> and C<cmd_aliases> attributes defined in 
+L<MooseX::Getopt::Meta::Attribute::Trait> are also honoured.
 
-  has 'some_option' => (
+  option 'some_option' => (
       is                => 'rw',
       isa               => 'Integer',
       required          => 1,
       documentation     => q[Some important option],
-      command_tags      => [qw(Important!)],
+      cmd_tags          => [qw(Important!)],
   );
 
 The help for this command would look something like this:
@@ -111,12 +119,13 @@ The help for this command would look something like this:
     --some_option      Some important option [Required; Integer; Important!]
     --help --usage -?  Prints this usage information. [Flag]
 
-If you do not want to include an attribute in the help text use the
-C<NoGetopt> trait from L<MooseX-Getopt>
+If you do not want to include an attribute not defined with 'option'
+you can use the 'AppOption' Trait 
+L<MooseX::Getopt::Meta::Attribute::NoGetopt> trait.
 
-  has '_private' => (
+  has 'option' => (
       is                => 'rw',
-      traits            => ['NoGetopt'],
+      traits            => ['AppOption'],
   );
 
 Finally your command classes will need a method which should be called
@@ -137,8 +146,8 @@ invocation script:
  MyApp->new_with_command->run();
 
 C<MyApp-E<gt>new_with_command> will try to instantiate a command class. If it
-fails it will return a L<MooseX::App::Messgae::Envelope> object possibly
+fails it will return a L<MooseX::App::Message::Envelope> object possibly
 containing an error message and a user help message. Since 
-L<MooseX::App::Messgae::Envelope> follows the null object pattern you can 
+L<MooseX::App::Message::Envelope> follows the null object pattern you can 
 call any method on it without checking the object type.
 

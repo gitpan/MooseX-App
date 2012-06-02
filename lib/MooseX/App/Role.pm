@@ -10,6 +10,7 @@ use Moose::Exporter;
 
 Moose::Exporter->setup_import_methods(
     also      => 'Moose::Role',
+    with_meta => [ 'option' ],
 );
 
 sub init_meta {
@@ -21,11 +22,15 @@ sub init_meta {
     Moose::Util::MetaRole::apply_metaroles(
         for             => $meta,
         role_metaroles  => {
-            applied_attribute=> ['MooseX::App::Meta::Role::Attribute'],
+            applied_attribute=> ['MooseX::App::Meta::Role::Attribute::Base'],
         },
     );
     
     return $meta;
+}
+
+sub option {
+    goto &MooseX::App::option;
 }
 
 1;
@@ -36,7 +41,7 @@ __END__
 
 =head1 NAME
 
-MooseX::App::Role - Use documentation attributes in a role
+MooseX::App::Role - Define attributes in a role
 
 =head1 SYNOPSIS
 
@@ -45,7 +50,7 @@ MooseX::App::Role - Use documentation attributes in a role
  use Moose::Role; # optional
  use MooseX::App::Role;
  
- has 'testattr' => (
+ option 'testattr' => (
     isa             => 'rw',
     cmd_tags        => [qw(Important! Nice))],
  );
@@ -53,13 +58,14 @@ MooseX::App::Role - Use documentation attributes in a role
 =head1 DESCRIPTION
 
 When loading this package in a role you can use the C<cmd_tags>
-attribute to document an attribute. 
+attribute to document an attribute and declare attributes with the
+'option' keyword.
 
 Alternatively you can also just use attribute traits:
 
  has 'testattr' => (
     isa             => 'rw',
-    traits          => [qw(App::Tags)]
+    traits          => ['AppBase','AppOption'],
     cmd_tags        => [qw(Important! Nice))],
  );
 

@@ -1,8 +1,8 @@
 package Test03;
 
-use MooseX::App qw(Config Color);
+use MooseX::App;
  
-has 'global_option' => (
+option 'global_option' => (
     is            => 'rw',
     isa           => 'Bool',
     #default       => 0,
@@ -10,9 +10,12 @@ has 'global_option' => (
     documentation => q[Enable this to do fancy stuff],
 );
 
-has '_hidden_option' => (
+has 'hidden_option' => (
     is            => 'rw',
-    traits        => [qw(NoGetopt)],
 );
+
+sub run {
+    print "RAN";   
+}
 
 1;

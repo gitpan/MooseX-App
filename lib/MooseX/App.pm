@@ -2,15 +2,17 @@ package MooseX::App;
 # ============================================================================«
 
 our $AUTHORITY = 'cpan:MAROS';
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 use strict;
 use warnings;
 
 use Moose::Exporter;
+use MooseX::App::Meta::Role::Attribute::Option;
 
 my ($IMPORT,$UNIMPORT,$INIT_META) = Moose::Exporter->build_import_methods(
-    with_meta           => [ 'app_namespace','app_base' ],
+    with_meta           => [ 'app_namespace','app_base', 'option' ],
+    as_is               => [ '_compute_getopt_attrs' ],
     also                => 'Moose',
     install             => [qw(unimport init_meta)],
 );
@@ -49,7 +51,7 @@ sub init_meta {
     my $plugins         = $PLUGIN_SPEC{$args{for_class}} || [];
     my %apply_metaroles = (
         class               => ['MooseX::App::Meta::Role::Class::Base'],
-        attribute           => ['MooseX::App::Meta::Role::Attribute'],
+        attribute           => ['MooseX::App::Meta::Role::Attribute::Base'],
     );
     my @apply_roles     = ('MooseX::App::Base');
     
@@ -91,6 +93,26 @@ sub init_meta {
     return $meta;
 }
 
+sub option {
+    my $meta = shift;
+    my $name = shift;
+ 
+    Moose->throw_error('Usage: option \'name\' => ( key => value, ... )')
+        if @_ % 2 == 1;
+ 
+    my %options = ( definition_context => Moose::Util::_caller_info(), @_ );
+    my $attrs = ( ref($name) eq 'ARRAY' ) ? $name : [ ($name) ];
+    $options{traits} ||= [];
+    
+    push (@{$options{traits}},'MooseX::App::Meta::Role::Attribute::Option')
+        unless grep { 
+            $_ eq 'MooseX::App::Meta::Role::Attribute::Option' 
+            || $_ eq 'AppOption' 
+        } @{$options{traits}};
+    
+    $meta->add_attribute( $_, %options ) for @$attrs;
+}
+
 sub app_namespace($) {
     my ( $meta, $name ) = @_;
     return $meta->app_namespace($name);
@@ -99,6 +121,16 @@ sub app_namespace($) {
 sub app_base($) {
     my ( $meta, $name ) = @_;
     return $meta->app_base($name);
+}
+
+# Dirty hack to hide private attributes from MooseX-Getopt
+sub _compute_getopt_attrs {
+    my ($class) = @_;
+
+    return
+        sort { $a->insertion_order <=> $b->insertion_order }
+        grep { $_->does('AppOption') } 
+        $class->meta->get_all_attributes
 }
 
 no Moose;
@@ -119,19 +151,23 @@ In your base class:
   package MyApp;
   use MooseX::App qw(Config Color);
  
-  has 'global_option' => (
+  option 'global_option' => (
       is            => 'rw',
       isa           => 'Bool',
       documentation => q[Enable this to do fancy stuff],
   );
+  
+  has 'private' => ( 
+      is              => 'rw',
+  ); # not exposed
 
 Write multiple command classes:
 
   package MyApp::SomeCommand;
-  use MooseX::App::Command;
-  extends qw(MyApp);
+  use MooseX::App::Command; # important
+  extends qw(MyApp); # purely optional
   
-  has 'some_option' => (
+  option 'some_option' => (
       is            => 'rw',
       isa           => 'Str',
       documentation => q[Very important option!],
@@ -162,11 +198,27 @@ MooseX-App will then take care of
 
 =item * Finding, loading and initializing the command classes
 
-=item * Creating automated doucumentation
+=item * Creating automated doucumentation from pod and attributes
 
 =item * Reading and validating the command line options entered by the user
 
 =back
+
+Commandline options are defined using the 'option' keyword which accepts
+the same attributes as Moose' 'has' keyword.
+
+  option 'some_option' => (
+      is            => 'rw',
+      isa           => 'Str',
+  );
+
+This is equivalent to
+
+  has 'some_option' => (
+      is            => 'rw',
+      isa           => 'Str',
+      traits        => ['AppOption'],
+  );
 
 Read the L<Tutorial|MooseX::App::Tutorial> for getting started with a simple 
 MooseX::App command line application.
@@ -185,7 +237,13 @@ You can pass a hash of default params to new_with_command
 
  MyApp->new_with_command( %default );
 
-=head1 FUNCTIONS
+=head2 initialize_command
+
+ my $myapp_command = MyApp->new_with_command($command_name,%default);
+
+Helper method to initialize the command class for the given command.
+
+=head1 OPTIONS
 
 =head2 app_base
 
@@ -213,6 +271,9 @@ Read the L<Writing MooseX-App Plugins|MooseX::App::WritingPlugins>
 documentation on how to create your own plugins.
 
 =head1 SEE ALSO
+
+Read the L<Tutorial|MooseX::App::Tutorial> for getting started with a simple 
+MooseX::App command line application.
 
 L<MooseX::App::Cmd>, L<MooseX::Getopt> and L<App::Cmd>
 

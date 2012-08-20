@@ -22,7 +22,7 @@ sub class_to_command {
     
     $class =~ s/^\Q$namespace\E:://;
     $class =~ s/^.+::([^:]+)$/$1/;
-    return decamelize($class);
+    return lc(decamelize($class));
 }
 
 sub format_text {
@@ -93,7 +93,7 @@ sub split_string {
     push(@lines,$line)
         if ($line ne '');
     
-    @lines = map { s/^\s*(.+?)\s*$/$1/; $_ } @lines;
+    @lines =  map { m/^\s*(.+?)\s*$/ ? $1 : $_  } @lines;
     
     return @lines;
 }

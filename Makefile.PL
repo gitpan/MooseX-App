@@ -23,13 +23,17 @@ requires        'String::CamelCase'             => 0;
 requires        'List::Util'                    => 0;
 requires        'Pod::Elemental'                => 0;
 
-feature 'Colorful output',
+feature 'Color plugin: Colorful output',
     -default   => 1,
     'Term::ANSIColor'                           => 0;
 
-feature 'Config files in users home directory',
+feature 'ConfigHome plugin: Config files in users home directory',
     -default   => 0,
     'File::HomeDir'                             => 0;
+
+feature 'Fuzzy plugin: Handle typos in command names',
+    -default   => 0,
+    'Text::WagnerFischer'                       => 0;
 
 build_requires  'Test::Most'                    => 0;
 build_requires  'Test::NoWarnings'              => 0;

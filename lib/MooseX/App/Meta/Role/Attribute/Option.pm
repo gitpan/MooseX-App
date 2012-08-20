@@ -9,7 +9,6 @@ use namespace::autoclean;
 use Moose::Role;
 with qw(MooseX::Getopt::Meta::Attribute::Trait);
 
-
 has 'cmd_tags' => (
     is          => 'rw',
     isa         => 'ArrayRef[Str]',
@@ -18,7 +17,11 @@ has 'cmd_tags' => (
 
 {
     package Moose::Meta::Attribute::Custom::Trait::AppOption;
-    sub register_implementation { 'MooseX::App::Meta::Role::Attribute::Option' }
+    
+    use strict;
+    use warnings;
+    
+    sub register_implementation { return 'MooseX::App::Meta::Role::Attribute::Option' }
 }
 
 1;

@@ -31,4 +31,4 @@ requires:
   String::CamelCase: 0
   namespace::autoclean: 0
   perl: 5.010
-version: 1.06
+version: 1.07

@@ -1,5 +1,5 @@
 # ============================================================================
-package MooseX::App::Plugin::Fuzzy;
+package MooseX::App::Plugin::Typo;
 # ============================================================================
 
 use 5.010;
@@ -12,9 +12,10 @@ sub plugin_metaroles {
     my ($self,$class) = @_;
     
     return {
-        class   => ['MooseX::App::Plugin::Fuzzy::Meta::Class'],
+        class   => ['MooseX::App::Plugin::Typo::Meta::Class'],
     }
 }
+
 
 1;
 
@@ -24,22 +25,20 @@ __END__
 
 =head1 NAME
 
-MooseX::App::Plugin::Similar - Handle typos in command names
+MooseX::App::Plugin::Typo - Handle typos in command names
 
 =head1 SYNOPSIS
 
 In your base class:
 
  package MyApp;
- use MooseX::App qw(Similar);
+ use MooseX::App qw(Typo);
 
 In your shell
 
  bash$ myapp pusl
- Ambiguous command 'pusl'
- Which command did you mean?
- * push
- * pull
+ Unknown command 'psul'
+ Did you mean myapp pull, myapp push?
 
 =head1 DESCRIPTION
 

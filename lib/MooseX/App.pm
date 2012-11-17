@@ -1,3 +1,4 @@
+# ============================================================================«
 package MooseX::App;
 # ============================================================================«
 
@@ -7,18 +8,20 @@ use strict;
 use warnings;
 
 our $AUTHORITY = 'cpan:MAROS';
-our $VERSION = '1.07';
+our $VERSION = '1.08';
 
 use List::Util qw(max);
 use MooseX::App::Meta::Role::Attribute::Option;
 use MooseX::App::Exporter qw(app_base option);
 use MooseX::App::Message::Envelope;
 use Moose::Exporter;
+use Scalar::Util qw(blessed);
 
 my ($IMPORT,$UNIMPORT,$INIT_META) = Moose::Exporter->build_import_methods(
     with_meta           => [ 'app_namespace', 'app_base', 'option' ],
-    also                => 'Moose',
-    install             => [ 'unimport', 'init_meta' ],
+    also                => [ 'Moose' ],
+    as_is               => [ 'new_with_command' ],
+    install             => [ 'unimport','init_meta' ],
 );
 
 sub import {
@@ -50,6 +53,56 @@ sub app_namespace($) {
     return $meta->app_namespace($name);
 }
 
+sub new_with_command {
+    my ($class,%args) = @_;
+
+    Moose->throw_error('new_with_command is a class method')
+        if ! defined $class || blessed($class);
+    
+    my $meta = $class->meta;
+
+    Moose->throw_error('new_with_command may only be called from the application base package')
+        if $meta->meta->does_role('MooseX::App::Meta::Role::Class::Command');
+    
+    local @ARGV = @ARGV;
+    my $first_argv = shift(@ARGV);
+    
+    # No args
+    if (! defined $first_argv
+        || $first_argv =~ m/^\s*$/
+        || $first_argv =~ m/^-/) {
+        return MooseX::App::Message::Envelope->new(
+            $meta->command_message(
+                header          => "Missing command",
+                type            => "error",
+            ),
+            $meta->command_usage_global(),
+        );
+    # Requested help
+    } elsif (lc($first_argv) =~ m/^-{0,2}?(help|h|\?|usage)$/) {
+        return MooseX::App::Message::Envelope->new(
+            $meta->command_usage_global(),
+        );
+    # Looks like a command
+    } else {
+        my $return = $meta->command_get($first_argv);
+        
+        # Nothing found
+        if (blessed $return
+            && $return->isa('MooseX::App::Message::Block')) {
+            return MooseX::App::Message::Envelope->new(
+                $return,
+                $meta->command_usage_global(),
+            );
+        # One command found
+        } else {
+            my $command_class = $meta->app_commands->{$return};
+            return $class->initialize_command_class($command_class,%args);
+        }
+    }
+}
+
+
 no Moose;
 1;
 
@@ -78,7 +131,8 @@ In your base class:
       is              => 'rw',
   ); # not exposed
 
-Write multiple command classes:
+Write multiple command classes (If you have only a single command class
+you might use L<MooseX-App-Simple> instead)
 
   package MyApp::SomeCommand;
   use MooseX::App::Command; # important

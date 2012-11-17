@@ -24,11 +24,11 @@ requires:
   List::Util: 0
   Module::Pluggable: 0
   Moose: 2.00
-  MooseX::Getopt: 0
+  MooseX::Getopt: 0.43
   MooseX::Types::Path::Class: 0
   Path::Class: 0
   Pod::Elemental: 0
   String::CamelCase: 0
   namespace::autoclean: 0
   perl: 5.010
-version: 1.07
+version: 1.08

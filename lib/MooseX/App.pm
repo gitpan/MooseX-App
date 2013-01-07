@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 our $AUTHORITY = 'cpan:MAROS';
-our $VERSION = '1.09';
+our $VERSION = '1.10';
 
 use List::Util qw(max);
 use MooseX::App::Meta::Role::Attribute::Option;
@@ -208,9 +208,9 @@ You can pass a hash of default params to new_with_command
 
  MyApp->new_with_command( %default );
 
-=head2 initialize_command
+=head2 initialize_command_class
 
- my $myapp_command = MyApp->initialize_command($command_name,%default);
+ my $myapp_command = MyApp->initialize_command_class($command_name,%default);
 
 Helper method to initialize the command class for the given command.
 

@@ -8,17 +8,17 @@ use strict;
 use warnings;
 
 our $AUTHORITY = 'cpan:MAROS';
-our $VERSION = '1.10';
+our $VERSION = '1.11';
 
 use List::Util qw(max);
 use MooseX::App::Meta::Role::Attribute::Option;
-use MooseX::App::Exporter qw(app_base option);
+use MooseX::App::Exporter qw(app_base app_fuzzy option);
 use MooseX::App::Message::Envelope;
 use Moose::Exporter;
 use Scalar::Util qw(blessed);
 
 my ($IMPORT,$UNIMPORT,$INIT_META) = Moose::Exporter->build_import_methods(
-    with_meta           => [ 'app_namespace', 'app_base', 'option' ],
+    with_meta           => [ 'app_namespace', 'app_base', 'app_fuzzy', 'option' ],
     also                => [ 'Moose' ],
     as_is               => [ 'new_with_command' ],
     install             => [ 'unimport','init_meta' ],
@@ -64,7 +64,7 @@ sub new_with_command {
     Moose->throw_error('new_with_command may only be called from the application base package')
         if $meta->meta->does_role('MooseX::App::Meta::Role::Class::Command');
     
-    local @ARGV = @ARGV;
+    local @ARGV = MooseX::App::Utils::encoded_argv();
     my $first_argv = shift(@ARGV);
     
     # No args
@@ -230,6 +230,16 @@ be changed via the app_base function.
 
 Usually MooseX::App will take the package name of the base class as the 
 namespace for commands. This namespace can be changed.
+
+=head2 app_fuzzy
+
+ app_fuzzy;
+ OR
+ app_fuzzy(1);
+ OR
+ app_fuzzy(0);
+
+Enables fuzzy matching of commands and attributes. Is turned off by default.
 
 =head1 PLUGINS
 

@@ -107,6 +107,16 @@ OPTIONS
     Usually MooseX::App will take the package name of the base class as the
     namespace for commands. This namespace can be changed.
 
+  app_fuzzy
+     app_fuzzy;
+     OR
+     app_fuzzy(1);
+     OR
+     app_fuzzy(0);
+
+    Enables fuzzy matching of commands and attributes. Is turned off by
+    default.
+
 PLUGINS
     The behaviour of MooseX-App can be customized with plugins. To load a
     plugin just pass a list of plugin names after the "use MooseX-App"

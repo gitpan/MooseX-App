@@ -83,7 +83,10 @@ _${prefix}_macc() {
 EOT
  
     $syntax .= "complete -o default -F _${prefix}_macc ". $app_meta->app_base. "\n";
-    return $syntax;
+    
+    return MooseX::App::Message::Envelope->new(
+        MooseX::App::Message::Block->new({ body => $syntax })
+    );
 }
 
 __PACKAGE__->meta->make_immutable;

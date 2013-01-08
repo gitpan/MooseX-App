@@ -2,6 +2,7 @@ package Test05;
 
 #use Moose;
 use MooseX::App::Simple qw(Config Env);
+app_fuzzy;
 
 option 'some_option' => (
     is            => 'rw',
@@ -22,6 +23,5 @@ sub run {
     
     warn $self->dump;   
 }
-
 
 1;

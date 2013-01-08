@@ -2,7 +2,7 @@
 
 # t/01_basic.t - Basic tests
 
-use Test::Most tests => 20+1;
+use Test::Most tests => 21+1;
 use Test::NoWarnings;
 
 use lib 't/testlib';
@@ -30,7 +30,7 @@ use Test01;
     local @ARGV = qw(xxxx --global 10);
     my $test03 = Test01->new_with_command;
     isa_ok($test03,'MooseX::App::Message::Envelope');
-    is($test03->blocks->[0]->header,"Unknown command 'xxxx'",'Message is set');
+    is($test03->blocks->[0]->header,"Unknown command: xxxx",'Message is set');
     is($test03->blocks->[0]->type,"error",'Message is of type error');
     is($test03->blocks->[1]->header,"usage:",'Usage set');
     is($test03->blocks->[1]->body,"    01_basic.t command [long options...]
@@ -43,7 +43,7 @@ use Test01;
     is($test03->blocks->[3]->header,"available commands:",'Available commands set');
     is($test03->blocks->[3]->body,"    command_a   Command A!
     command_b   Test class command B for test 01
-    command_c1  
+    command_c1  Test C1
     help        Prints this usage information",'Available commands body set');
 }
 
@@ -72,4 +72,10 @@ use Test01;
     --global           test [Required; Integer; Important!]
     --help --usage -?  Prints this usage information. [Flag]",'Options body is set');
     #print $test04;
+}
+
+{
+    explain('Test 5: Test wrapper script');
+    my $output = `$^X t/test01.pl command_a --command_local2 test --global 10`;
+    is($output,'RUN COMMAND-A:test','Output is ok');
 }

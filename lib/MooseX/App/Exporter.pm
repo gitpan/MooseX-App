@@ -1,11 +1,14 @@
 # ============================================================================
 package MooseX::App::Exporter;
 # ============================================================================
+
+use 5.010;
+use utf8;
 use strict;
 use warnings;
-use utf8;
 
 use Moose::Exporter;
+use MooseX::App::Utils;
 
 our %PLUGIN_SPEC;
 
@@ -48,12 +51,16 @@ sub option {
     return;
 }
 
+sub app_fuzzy(;$) {
+    my ( $meta, $value ) = @_;
+    return $meta->app_fuzzy($value // 1);
+}
+
 sub app_base($) {
     my ( $meta, $name ) = @_;
     
     return $meta->app_base($name);
 }
-
 
 sub process_plugins {
     my ($self,$caller_class,@plugins) = @_;

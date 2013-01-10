@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 our $AUTHORITY = 'cpan:MAROS';
-our $VERSION = '1.11';
+our $VERSION = '1.12';
 
 use List::Util qw(max);
 use MooseX::App::Meta::Role::Attribute::Option;
@@ -132,7 +132,7 @@ In your base class:
   ); # not exposed
 
 Write multiple command classes (If you have only a single command class
-you might use L<MooseX-App-Simple> instead)
+you might use L<MooseX::App::Simple> instead)
 
   package MyApp::SomeCommand;
   use MooseX::App::Command; # important

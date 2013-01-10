@@ -21,6 +21,10 @@ no_index:
     - inc
     - t
     - xt
+recommends:
+  File::HomeDir: 0
+  Term::ANSIColor: 0
+  Text::WagnerFischer: 0
 requires:
   Config::Any: 0
   List::Util: 0
@@ -36,4 +40,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://github.com/maros/MooseX-App.git
-version: 1.11
+version: 1.12

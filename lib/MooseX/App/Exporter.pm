@@ -26,17 +26,19 @@ sub import {
             unless defined $symbol;
         $caller_stash->add_symbol('&'.$import, $symbol);
     }
+    
+    return;
 }
-
 
 sub option {
     my $meta = shift;
     my $name = shift;
+    my @rest = @_;
  
     Moose->throw_error('Usage: option \'name\' => ( key => value, ... )')
-        if @_ % 2 == 1;
+        if @rest % 2 == 1;
  
-    my %options = ( definition_context => Moose::Util::_caller_info(), @_ );
+    my %options = ( definition_context => Moose::Util::_caller_info(), @rest );
     my $attrs = ( ref($name) eq 'ARRAY' ) ? $name : [ ($name) ];
     $options{traits} ||= [];
     
@@ -51,9 +53,9 @@ sub option {
     return;
 }
 
-sub app_fuzzy(;$) {
+sub app_fuzzy($) {
     my ( $meta, $value ) = @_;
-    return $meta->app_fuzzy($value // 1);
+    return $meta->app_fuzzy($value);
 }
 
 sub app_base($) {
@@ -134,6 +136,11 @@ sub command_short_description($) {
 sub command_long_description($) {
     my ( $meta, $description ) = @_;
     return $meta->command_long_description($description);
+}
+
+sub command_usage($) {
+    my ( $meta, $usage ) = @_;
+    return $meta->command_usage($usage);
 }
 
 1;

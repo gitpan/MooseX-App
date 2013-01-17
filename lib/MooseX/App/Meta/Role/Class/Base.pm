@@ -33,8 +33,15 @@ has 'app_base' => (
 has 'app_fuzzy' => (
     is          => 'rw',
     isa         => 'Bool',
-    default     => 0,
+    default     => 1,
 );
+
+has 'app_command_name' => (
+    is          => 'rw',
+    isa         => 'CodeRef',
+    default     => sub { \&MooseX::App::Utils::class_to_command },
+);
+
 
 has 'app_commands' => (
     is          => 'rw',
@@ -63,12 +70,21 @@ sub _build_app_commands {
         search_path => [ $self->app_namespace ],
     );
     
+    my $namespace = $self->app_namespace;
+    my $commandsub = $self->app_command_name;
+    
     my %return;
     foreach my $command_class ($mpo->plugins) {
-        my $plugin_class_name =  substr($command_class,length($self->app_namespace)+2);
+        my $command_class_name =  substr($command_class,length($namespace)+2);
+        
         next
-            if $plugin_class_name =~ m/::/;
-        my $command = MooseX::App::Utils::class_to_command($command_class,$self->app_namespace);
+            if $command_class_name =~ m/::/;
+        
+        $command_class_name =~ s/^\Q$namespace\E:://;
+        $command_class_name =~ s/^.+::([^:]+)$/$1/;
+        
+        my $command = $commandsub->($command_class_name);
+        
         $return{$command} = $command_class;
     }
     
@@ -324,17 +340,29 @@ sub command_usage_attributes {
 }
 
 sub command_usage_header {
-    my ($self,$command) = @_;
-    
-    $command ||= 'command';
+    my ($self,$command_meta_class) = @_;
     
     my $caller = $self->app_base;
     
+    my ($command_name,$usage);
+    if ($command_meta_class) {
+        $command_name = $self->command_class_to_command($command_meta_class->name);
+        if ($command_meta_class->can('has_command_usage')
+            && $command_meta_class->has_command_usage) {
+            $usage = MooseX::App::Utils::format_text($command_meta_class->command_usage);
+        }
+    } else {
+        $command_name = 'command';
+    }
+    
+    $usage ||= MooseX::App::Utils::format_text("$caller $command_name [long options...]
+$caller help
+$caller $command_name --help");
+    
     return $self->command_message(
         header  => 'usage:',
-        body    => MooseX::App::Utils::format_text("$caller $command [long options...]
-$caller help
-$caller $command --help"));
+        body    => $usage,
+    );
 }
 
 sub command_usage_description {
@@ -380,7 +408,7 @@ sub command_usage_command {
     my $command_name = $self->command_class_to_command($command_class);
     
     my @usage;
-    push(@usage,$self->command_usage_header($command_name));
+    push(@usage,$self->command_usage_header($command_meta_class));
     push(@usage,$self->command_usage_description($command_meta_class));
     push(@usage,$self->command_usage_attributes($command_meta_class));
     
@@ -444,7 +472,7 @@ plugins for MooseX-App.
 
 Message class for generating error messages. Defaults to
 MooseX::App::Message::Block. The default can be overwritten by altering
-the C<_build_app_messageclass> method.
+the C<_build_app_messageclass> method. Defaults to MooseX::App::Message::Block
 
 =head2 app_namespace
 
@@ -455,12 +483,17 @@ namespace for commands. This namespace can be changed.
 
 Usually MooseX::App will take the name of the calling wrapper script to 
 construct the programm name in various help messages. This name can 
-be changed via the app_base accessor.
+be changed via the app_base accessor. Defaults to the base name of $0
 
 =head2 app_fuzzy
 
 Boolean attribute that controlls if command names and attributes should be 
-matched exactly or fuzzy.
+matched exactly or fuzzy. Defaults to true.
+
+=head2 app_command_name
+
+Coderef attribute that controlls how package names are translated to command 
+names and attributes. Defaults to MooseX::App::Utils::class_to_command
 
 =head1 METHODS
 
@@ -541,7 +574,7 @@ Returns a list of messages containing the documentation for the application.
 =head2 command_usage_header
 
  my $message = $meta->command_usage_header();
- my $message = $meta->command_usage_header($command_name);
+ my $message = $meta->command_usage_header($command_meta_class);
 
 Returns a message containing the basic usage documentation
 

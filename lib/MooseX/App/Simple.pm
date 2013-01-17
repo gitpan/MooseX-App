@@ -7,15 +7,15 @@ use strict;
 use warnings;
 
 use Moose::Exporter;
-use MooseX::App::Exporter qw(app_base app_fuzzy option command_short_description command_long_description);
+use MooseX::App::Exporter qw(app_base app_fuzzy option command_short_description command_long_description command_usage);
 use MooseX::App::Meta::Role::Attribute::Option;
 use MooseX::App::Message::Envelope;
 use Scalar::Util qw(blessed);
 
-our $VERSION = '1.13';
+our $VERSION = '1.14';
 
 my ($IMPORT,$UNIMPORT,$INIT_META) = Moose::Exporter->build_import_methods(
-    with_meta           => [ 'app_base', 'app_fuzzy', 'option', 'command_short_description', 'command_long_description' ],
+    with_meta           => [ 'app_base', 'app_fuzzy', 'option', 'command_short_description', 'command_long_description', 'command_usage' ],
     also                => [ 'Moose' ],
     as_is               => [ 'new_with_options' ],
     install             => [ 'unimport', 'init_meta' ],
@@ -50,12 +50,22 @@ sub init_meta {
 }
 
 sub new_with_options {
-    my ($class,%args) = @_;
+    my ($class,@args) = @_;
 
     Moose->throw_error('new_with_options is a class method')
         if ! defined $class || blessed($class);
 
     local @ARGV = MooseX::App::Utils::encoded_argv();
+
+    my %args;
+    if (scalar @args == 1
+        && ref($args[0]) eq 'HASH' ) {
+        %args = %{$args[0]}; 
+    } elsif (scalar @args % 2 == 0) {
+        %args = @args;
+    } else {
+        Moose->throw_error('new_with_command got inavlid extra arguments');
+    }
 
     return $class->initialize_command_class($class,%args);
 }

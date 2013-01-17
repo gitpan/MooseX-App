@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 our $AUTHORITY = 'cpan:MAROS';
-our $VERSION = '1.13';
+our $VERSION = '1.14';
 
 use List::Util qw(max);
 use MooseX::App::Meta::Role::Attribute::Option;
@@ -18,7 +18,7 @@ use Moose::Exporter;
 use Scalar::Util qw(blessed);
 
 my ($IMPORT,$UNIMPORT,$INIT_META) = Moose::Exporter->build_import_methods(
-    with_meta           => [ 'app_namespace', 'app_base', 'app_fuzzy', 'option' ],
+    with_meta           => [ 'app_namespace', 'app_base', 'app_fuzzy', 'app_command_name', 'option' ],
     also                => [ 'Moose' ],
     as_is               => [ 'new_with_command' ],
     install             => [ 'unimport','init_meta' ],
@@ -48,14 +48,19 @@ sub init_meta {
     return MooseX::App::Exporter->process_init_meta(%args);
 }
 
+sub app_command_name(&) {
+    my ( $meta, $namesub ) = @_;
+    return $meta->app_command_name($namesub);
+}
+
 sub app_namespace($) {
     my ( $meta, $name ) = @_;
     return $meta->app_namespace($name);
 }
 
 sub new_with_command {
-    my ($class,%args) = @_;
-
+    my ($class,@args) = @_;
+    
     Moose->throw_error('new_with_command is a class method')
         if ! defined $class || blessed($class);
     
@@ -63,7 +68,19 @@ sub new_with_command {
 
     Moose->throw_error('new_with_command may only be called from the application base package')
         if $meta->meta->does_role('MooseX::App::Meta::Role::Class::Command');
+        
+    # Extra args
+    my %args;
+    if (scalar @args == 1
+        && ref($args[0]) eq 'HASH' ) {
+        %args = %{$args[0]}; 
+    } elsif (scalar @args % 2 == 0) {
+        %args = @args;
+    } else {
+        Moose->throw_error('new_with_command got inavlid extra arguments');
+    }
     
+    # Localize and encode @ARGV
     local @ARGV = MooseX::App::Utils::encoded_argv();
     my $first_argv = shift(@ARGV);
     
@@ -233,13 +250,22 @@ namespace for commands. This namespace can be changed.
 
 =head2 app_fuzzy
 
- app_fuzzy;
- OR
  app_fuzzy(1);
  OR
  app_fuzzy(0);
 
-Enables fuzzy matching of commands and attributes. Is turned off by default.
+Enables fuzzy matching of commands and attributes. Is turned on by default.
+
+=head2 app_command_name
+
+ app_command_name {
+     my ($package) = shift;
+     # munge package name;
+     return $command_name
+ };
+
+This sub can be used to control how package names should be translated
+to command names.
 
 =head1 PLUGINS
 

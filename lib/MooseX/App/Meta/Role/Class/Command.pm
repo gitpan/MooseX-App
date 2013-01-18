@@ -29,7 +29,6 @@ has 'command_usage' => (
     is          => 'rw',
     isa         => 'Maybe[Str]',
     lazy_build  => 1,
-    predicate   => 'has_command_usage',
 );
 
 sub command_short_description_predicate {
@@ -100,6 +99,7 @@ sub _build_command_pod {
     while (my ($key,$value) = each %pod) {
         next
             unless defined $value;
+            
         my $meta_attribute = $self->meta->find_attribute_by_name($key);
         next
             unless defined $meta_attribute;
@@ -137,7 +137,8 @@ MooseX-App.
 =head2 command_short_description
 
 Read/set the short command description. Will be extracted from the Pod NAME
-section if not set.
+section if not set. Alternative this will be taken from the DistZilla
+ABSTRACT tag.
 
 =head2 command_long_description
 

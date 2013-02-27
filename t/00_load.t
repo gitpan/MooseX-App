@@ -2,9 +2,10 @@
 
 # t/00_load.t - check module loading and create testing directory
 
-use Test::Most tests => 31;
+use Test::Most tests => 32;
 
 use_ok( 'MooseX::App' ); 
+use_ok( 'MooseX::App::ParsedArgv' );
 use_ok( 'MooseX::App::Command' );
 #use_ok( 'MooseX::App::Role' ); # cannot test since it can only be loaded into a Moose::Role
 use_ok( 'MooseX::App::Utils' );
@@ -32,7 +33,7 @@ use_ok( 'MooseX::App::Role::Common');
 
 SKIP :{
     my $ok = eval {
-        Class::MOP::load_class('Term::ANSIColor');
+        Class::Load::load_class('Term::ANSIColor');
         use_ok( 'MooseX::App::Plugin::Color' );
         use_ok( 'MooseX::App::Message::BlockColor' );
         use_ok( 'MooseX::App::Plugin::Color::Meta::Class');
@@ -44,7 +45,7 @@ SKIP :{
 
 SKIP :{
     my $ok = eval {
-        Class::MOP::load_class('File::HomeDir');
+        Class::Load::load_class('File::HomeDir');
         use_ok( 'MooseX::App::Plugin::ConfigHome' );
         use_ok( 'MooseX::App::Plugin::ConfigHome::Meta::Class');
     };
@@ -55,7 +56,7 @@ SKIP :{
 
 SKIP :{
     my $ok = eval {
-        Class::MOP::load_class('Text::WagnerFischer');
+        Class::Load::load_class('Text::WagnerFischer');
         use_ok( 'MooseX::App::Plugin::Typo' );
         use_ok( 'MooseX::App::Plugin::Typo::Meta::Class');
     };

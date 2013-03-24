@@ -30,4 +30,4 @@ requires:
   Pod::Elemental: 0
   namespace::autoclean: 0
   perl: 5.010
-version: 1.17
+version: 1.18

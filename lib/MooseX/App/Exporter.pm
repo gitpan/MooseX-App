@@ -65,10 +65,17 @@ sub _handle_attribute {
                     || 'MooseX::App::Meta::Role::Attribute::Option' ~~ $local_attributes{traits};
             }
         }
+
         $meta->add_attribute( $attr, %local_attributes );
+
     }
     
     return;
+}
+
+sub app_strict($) {
+    my ( $meta, $value ) = @_;
+    return $meta->app_strict($value);
 }
 
 sub app_fuzzy($) {

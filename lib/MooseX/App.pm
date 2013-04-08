@@ -8,16 +8,16 @@ use strict;
 use warnings;
 
 our $AUTHORITY = 'cpan:MAROS';
-our $VERSION = '1.19';
+our $VERSION = '1.20';
 
 use MooseX::App::Meta::Role::Attribute::Option;
-use MooseX::App::Exporter qw(app_base app_fuzzy option parameter);
+use MooseX::App::Exporter qw(app_base app_fuzzy app_strict option parameter);
 use MooseX::App::Message::Envelope;
 use Moose::Exporter;
 use Scalar::Util qw(blessed);
 
 my ($IMPORT,$UNIMPORT,$INIT_META) = Moose::Exporter->build_import_methods(
-    with_meta           => [ qw(app_namespace app_base app_fuzzy app_command_name option parameter) ],
+    with_meta           => [ qw(app_namespace app_base app_fuzzy app_command_name app_strict option parameter) ],
     also                => [ 'Moose' ],
     as_is               => [ 'new_with_command' ],
     install             => [ 'unimport','init_meta' ],
@@ -77,7 +77,7 @@ sub new_with_command {
     } elsif (scalar @args % 2 == 0) {
         %args = @args;
     } else {
-        Moose->throw_error('new_with_command got inavlid extra arguments');
+        Moose->throw_error('new_with_command got invalid extra arguments');
     }
     
     # Get ARGV
@@ -290,7 +290,7 @@ You can pass a hash of default params to new_with_command
 
 Helper method to initialize the command class for the given command.
 
-=head1 OPTIONS
+=head1 GLOBAL OPTIONS
 
 =head2 app_base
 
@@ -309,11 +309,20 @@ namespace for commands. This namespace can be changed.
 
 =head2 app_fuzzy
 
- app_fuzzy(1);
+ app_fuzzy(1); # default
  OR
  app_fuzzy(0);
 
 Enables fuzzy matching of commands and attributes. Is turned on by default.
+
+=head2 app_strict
+
+ app_strict(1); # default 
+ OR
+ app_strict(0);
+
+If strict is enabled the programm will terminate with an error message if
+superfluous/unknown parameters and options are supplied.
 
 =head2 app_command_name
 
@@ -325,6 +334,25 @@ Enables fuzzy matching of commands and attributes. Is turned on by default.
 
 This sub can be used to control how package names should be translated
 to command names.
+
+=head1 ATTRIBUTE OPTIONS
+
+=over
+
+=item * cmd_tags - Extra tags
+
+=item * cmd_flag - Override option name
+
+=item * cmd_aliases - Alternative option names
+
+=item * cmd_split - Split values
+
+=item * cmd_position - Option/Parameter order
+
+=back
+
+Refer to L<MooseX::App::Meta::Role::Attribute::Option> for detailed 
+documentation.
 
 =head1 PLUGINS
 

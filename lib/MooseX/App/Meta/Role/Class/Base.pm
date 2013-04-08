@@ -30,6 +30,12 @@ has 'app_base' => (
     default     => sub { Path::Class::File->new($0)->basename },
 );
 
+has 'app_strict' => (
+    is          => 'rw',
+    isa         => 'Bool',
+    default     => 1,
+);
+
 has 'app_fuzzy' => (
     is          => 'rw',
     isa         => 'Bool',
@@ -102,18 +108,22 @@ sub command_args {
     
     my ($return,$errors) = $self->command_parse_options(\@attributes_option);
     
-    while (my $option =$parsed_argv->consume('options') ) {
-        unshift(@{$errors},
-            $self->command_message(
-                header          => "Unknown option '".$option->key."'", # LOCALIZE
-                type            => "error",
-            )
-        );
+    if ($self->app_strict) {
+        while (my $option = $parsed_argv->consume('options') ) {
+            unshift(@{$errors},
+                $self->command_message(
+                    header          => "Unknown option '".$option->key."'", # LOCALIZE
+                    type            => "error",
+                )
+            );
+        }
     }
     
     # Process params
-    my @attributes_parameter  = $self->command_usage_attributes($metaclass,'parameter');
-        
+    my @attributes_parameter  = sort { 
+        $a->cmd_position <=> $b->cmd_position
+    } $self->command_usage_attributes($metaclass,'parameter');
+
     foreach my $attribute (@attributes_parameter) {
         my $value = $parsed_argv->consume('parameters');
         last
@@ -124,15 +134,16 @@ sub command_args {
         $return->{$attribute->name} = $parameter_value;
     }
     
-    while (my $parameter =$parsed_argv->consume('parameters') ) {
-        unshift(@{$errors},
-            $self->command_message(
-                header          => "Unknown parameter '".$parameter->key."'", # LOCALIZE
-                type            => "error",
-            )
-        );
-    }
-    
+    if ($self->app_strict) {
+        while (my $parameter = $parsed_argv->consume('parameters') ) {
+            unshift(@{$errors},
+                $self->command_message(
+                    header          => "Unknown parameter '".$parameter->key."'", # LOCALIZE
+                    type            => "error",
+                )
+            );
+        }
+    } 
     return ($return,$errors);
 }
 
@@ -265,6 +276,16 @@ sub command_process_attribute {
     
     my @errors;
     my $value;
+    
+    # Attribute with split
+    if ($attribute->has_cmd_split) {
+        my @raw_unfolded;
+        foreach (@{$raw}) {
+            push(@raw_unfolded,split($attribute->cmd_split,$_));
+        }
+        $raw = \@raw_unfolded;
+    }
+    
     # Attribute with type constraint
     if ($attribute->has_type_constraint) {
         my $type_constraint = $attribute->type_constraint;
@@ -469,7 +490,6 @@ sub command_usage_attributes {
     $types ||= [qw(option proto)];
     
     my @return;
-    # TODO order by insertion order
     foreach my $attribute ($metaclass->get_all_attributes) {
         next
             unless $attribute->does('AppOption')
@@ -514,7 +534,10 @@ sub command_usage_parameters {
     $metaclass ||= $self;
     
     my @parameters;
-    foreach my $attribute ($self->command_usage_attributes($metaclass,'parameter')) {
+    foreach my $attribute (     
+        sort { $a->cmd_position <=> $b->cmd_position } 
+             $self->command_usage_attributes($metaclass,'parameter')
+    ) {
         push(@parameters,[
             $attribute->cmd_usage_name(),
             $attribute->cmd_usage_description()

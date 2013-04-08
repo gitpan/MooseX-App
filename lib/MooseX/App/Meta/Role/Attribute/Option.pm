@@ -20,9 +20,6 @@ coerce 'MooseX::App::Types::CmdAliases'
 subtype 'MooseX::App::Types::CmdTypes' 
     => as enum([qw(proto option parameter)]);
 
-no Moose::Util::TypeConstraints;
-
-
 has 'cmd_type' => (
     is          => 'rw',
     isa         => 'MooseX::App::Types::CmdTypes',
@@ -47,6 +44,39 @@ has 'cmd_aliases' => (
     predicate   => 'has_cmd_aliases',
     coerce      => 1,
 );
+
+has 'cmd_split' => (
+    is          => 'rw',
+    isa         => union([qw(Str RegexpRef)]),
+    predicate   => 'has_cmd_split',
+);
+
+has 'cmd_position' => (
+    is => 'rw',
+    isa => 'Int',
+    default => 0,
+);
+
+no Moose::Util::TypeConstraints;
+
+my $GLOBAL_COUNTER = 1;
+
+around 'new' => sub {
+    my $orig = shift;
+    my $class = shift;
+    
+    my $self = $class->$orig(@_);
+    
+    if ($self->has_cmd_type) {
+        if ($self->cmd_position == 0) {
+            $GLOBAL_COUNTER++;
+            $self->cmd_position($GLOBAL_COUNTER);
+        }
+    }
+    
+    return $self;
+};
+
 
 sub cmd_is_bool {
     my ($self) = @_; 
@@ -148,7 +178,16 @@ sub cmd_tags_list {
     if ($self->has_type_constraint) {
         my $type_constraint = $self->type_constraint;
         if ($type_constraint->is_subtype_of('ArrayRef')) {
-            push(@tags,'Multiple');
+            if ($self->has_cmd_split) {
+                my $split = $self->cmd_split;
+                if (ref($split) eq 'Regexp') {
+                    $split = "$split";
+                    $split =~ s/^\(\?\^\w*:(.+)\)$/$1/x;
+                }
+                push(@tags,'Multiple','Split by "'.$split.'"');
+            } else {
+                push(@tags,'Multiple');
+            }
         } elsif ($type_constraint->is_a_type_of('HashRef')) {
             push(@tags,'Key-Value');
         }
@@ -226,6 +265,14 @@ Arrayref of alternative option names
 =head2 cmd_tags
 
 Extra option tags displayed in the usage information (in brackets)
+
+=head2 cmd_position
+
+Indicates the order of the parameters
+
+=head2 cmd_split
+
+Splits the value using the given separator or expression.
 
 =head1 METHODS
 

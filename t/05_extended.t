@@ -2,7 +2,7 @@
 
 # t/05_extended.t - Extended tests
 
-use Test::Most tests => 19+1;
+use Test::Most tests => 21+1;
 use Test::NoWarnings;
 
 use FindBin qw();
@@ -56,8 +56,8 @@ subtest 'All options available & no description' => sub {
     local @ARGV = qw(some --help);
     my $test04 = Test03->new_with_command;
     isa_ok($test04,'MooseX::App::Message::Envelope');
-    is($test04->blocks->[1]->header,'options:','No description');
-    is($test04->blocks->[1]->body,"    --another             [Required; Not important]
+    is($test04->blocks->[2]->header,'options:','No description');
+    is($test04->blocks->[2]->body,"    --another             [Required; Not important]
     --global_option       Enable this to do fancy stuff [Flag]
     --help -h --usage -?  Prints this usage information. [Flag]
     --roleattr            [Role]
@@ -104,7 +104,7 @@ subtest 'Test type constraints custom1' => sub {
 };
 
 subtest 'Test pass type constraints' => sub {
-    local @ARGV = qw(another --hash key1=value1 --hash key2=value2 --integer 10 --number 10.10 --custom1 11 --custom2 test --extra1 wurtsch);
+    local @ARGV = qw(another --hash key1=value1 --split a;b --split c --hash key2=value2 --integer 10 --number 10.10 --custom1 11 --custom2 test --extra1 wurtsch);
     my $test09 = Test03->new_with_command;
     isa_ok($test09,'Test03::AnotherCommand');
     is($test09->hash->{key1},"value1","Hash ok");
@@ -114,6 +114,7 @@ subtest 'Test pass type constraints' => sub {
     is(ref($test09->custom2),'SCALAR',"Custom type 2 ok");
     is(${$test09->custom2},'test',"Custom type 2 ok");
     is($test09->extra1,'wurtsch',"Attr set ok");
+    cmp_deeply($test09->split,[qw(a b c)],'Split ok');
 };
 
 subtest 'Test ambiguous options' => sub {
@@ -150,7 +151,19 @@ subtest 'Test positional params' => sub {
     local @ARGV = qw(extra hui --value baer);
     my $test12 = Test03->new_with_command;
     isa_ok($test12,'Test03::ExtraCommand');
-    is($test12->extra1,'hui','Extra1 value is undef');
+    is($test12->extra1,'hui','Extra1 value is "hui"');
+    is($test12->extra2, undef,'Extra2 value is undef');
+    is($test12->alpha, undef,'alpha value is undef');
+    is($test12->value,'baer','Value is set');
+};
+
+subtest 'Test positional params' => sub {
+    local @ARGV = qw(extra --value baer hui);
+    my $test12 = Test03->new_with_command;
+    isa_ok($test12,'Test03::ExtraCommand');
+    is($test12->extra1,'hui','Extra1 value is "hui"');
+    is($test12->extra2, undef,'Extra2 value is undef');
+    is($test12->alpha, undef,'alpha value is undef');
     is($test12->value,'baer','Value is set');
 };
 
@@ -158,8 +171,9 @@ subtest 'Test optional positional params' => sub {
     local @ARGV = qw(extra hui 11 --value baer);
     my $test12 = Test03->new_with_command;
     isa_ok($test12,'Test03::ExtraCommand');
-    is($test12->extra1,'hui','Extra1 value is undef');
-    is($test12->extra2,11,'Extra2 value is undef');
+    is($test12->extra1,'hui','Extra1 value is "hui"');
+    is($test12->extra2,11,'Extra2 value is "11"');
+    is($test12->alpha, undef,'alpha value is undef');
     is($test12->value,'baer','Value is set');
 };
 
@@ -170,7 +184,8 @@ subtest 'Test wrong positional params' => sub {
     is($test13->blocks->[0]->header,"Invalid value for 'extra2'","Error message ok");
     is($test13->blocks->[2]->header,"parameters:","Usage header ok");
     is($test13->blocks->[2]->body,"    extra1  Important extra parameter [Required]
-    extra2  [Integer]","Usage body ok");
+    extra2  [Integer]
+    alpha   [Integer]","Usage body ok");
 };
 
 subtest 'Test missing positional params' => sub {
@@ -179,3 +194,17 @@ subtest 'Test missing positional params' => sub {
     isa_ok($test13,'MooseX::App::Message::Envelope');
     is($test13->blocks->[0]->header,"Required parameter 'extra1' missing","Message ok");
 };
+
+Test03->meta->app_strict(0);
+
+subtest 'Test extra positional params' => sub {
+    local @ARGV = qw(extra p1 22 33 p4 --value baer --luchs fuchs);
+    my $test14 = Test03->new_with_command;
+    isa_ok($test14,'Test03::ExtraCommand');
+    is($test14->extra1,'p1','Param 1 ok');
+    is($test14->extra2,'22','Param 2 ok');
+    is($test14->alpha,'33','Param 3 ok');
+    is(MooseX::App::ParsedArgv->instance->consume('parameters')->key,'p4','Uncomsumed parameter ok');
+    is(MooseX::App::ParsedArgv->instance->consume('options')->key,'luchs','Uncomsumed option ok');
+};
+

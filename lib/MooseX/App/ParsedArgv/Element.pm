@@ -6,6 +6,7 @@ use 5.010;
 use utf8;
 
 use Moose;
+no if $] >= 5.018000, warnings => qw(experimental::smartmatch);
 
 has 'key' => (
     is              => 'ro',
@@ -58,12 +59,14 @@ sub serialize {
         }
         when ('option') { 
             my $key = (length $self->key == 1 ? '-':'--').$self->key;
-            join(' ',map { $key.' '.$_ } @{$self->value});
+            return join(' ',map { $key.' '.$_ } @{$self->value});
         }
-    }   
+    }
+    return;
 }
 
 __PACKAGE__->meta->make_immutable();
+1;
 
 =pod
 

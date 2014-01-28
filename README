@@ -6,7 +6,7 @@ SYNOPSIS
     In your base class:
 
       package MyApp;
-      use MooseX::App qw(Config Color);
+      use MooseX::App qw(Color);
  
       option 'global_option' => (
           is            => 'rw',
@@ -23,7 +23,7 @@ SYNOPSIS
 
       package MyApp::SomeCommand;
       use MooseX::App::Command; # important
-      extends qw(MyApp); # purely optional, only if you want to use global options from base class
+      extends qw(MyApp); # optional, only if you want to use global options from base class
   
       parameter 'some_parameter' => (
           is            => 'rw',
@@ -87,13 +87,15 @@ DESCRIPTION
     command line applications without having to worry about most of the
     annoying things usually involved. Just take any existing Moose class,
     add a single line ("use MooseX-App qw(PluginA PluginB ...);") and create
-    one class for each command in an underlying namespace.
+    one class for each command in an underlying namespace. Options and
+    positional parameters can be defined as simple Moose accessors.
 
     MooseX-App will then take care of
 
     *   Finding, loading and initializing the command classes
 
-    *   Creating automated help and documentation from pod and attributes
+    *   Creating automated help and documentation from modules POD and
+        attributes
 
     *   Reading, encoding and validating the command line options and
         positional parameters entered by the user
@@ -184,6 +186,9 @@ GLOBAL OPTIONS
     if superfluous/unknown positional parameters are supplied. If disabled
     all extra parameters will be copied to the extra_argv attribute.
 
+    The command_strict config in the command classes allows to set this
+    option individually for each command.
+
   app_command_name
      app_command_name {
          my ($package) = shift;
@@ -259,13 +264,28 @@ PLUGINS
         Adds a command to display the version and license of your
         application
 
+    *   MooseX::App::Plugin::Man
+
+        Display full manpage
+
+CAVEATS & KNOWN BUGS
+    Startup time may be an issue. If you do not require plugins and ability
+    for fine grained customisation then you should probably use
+    MooX::Options or MooX::Cmd.
+
+    In some cases - especially when using non-standard class inheritance -
+    you may end up with command classes lacking the help attribute. In this
+    case you need to include the following line in your base class
+
+     with qw(MooseX::App::Role::Common);
+
 SEE ALSO
     Read the Tutorial for getting started with a simple MooseX::App command
     line application.
 
     For alternatives you can check out
 
-    MooseX::App::Cmd, MooseX::Getopt, MooX::Options and App::Cmd
+    MooseX::App::Cmd, MooseX::Getopt, MooX::Options, MooX::Cmd and App::Cmd
 
 SUPPORT
     Please report any bugs or feature requests to
@@ -286,7 +306,7 @@ CONTRIBUTORS
     Michael G, Thomas Klausner, Yanick Champoux, Edward Baudrez
 
 COPYRIGHT
-    MooseX::App is Copyright (c) 2012 Maroš Kollár.
+    MooseX::App is Copyright (c) 2012-13 Maroš Kollár.
 
     This library is free software and may be distributed under the same
     terms as perl itself. The full text of the licence can be found in the

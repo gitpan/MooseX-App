@@ -1,6 +1,8 @@
 package Test03::YetAnotherCommand;
 
 use MooseX::App::Command;
+extends qw(Test03CommandBase);
+with qw(MooseX::App::Role::Common);
 
 option 'bool1' => (
     is            => 'rw',

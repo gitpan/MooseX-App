@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 our $AUTHORITY = 'cpan:MAROS';
-our $VERSION = '1.22';
+our $VERSION = '1.23';
 
 use MooseX::App::Meta::Role::Attribute::Option;
 use MooseX::App::Exporter qw(app_base app_fuzzy app_strict option parameter);
@@ -135,7 +135,7 @@ MooseX::App - Write user-friendly command line apps with even less suffering
 In your base class:
 
   package MyApp;
-  use MooseX::App qw(Config Color);
+  use MooseX::App qw(Color);
  
   option 'global_option' => (
       is            => 'rw',
@@ -152,7 +152,7 @@ you should use L<MooseX::App::Simple> instead)
 
   package MyApp::SomeCommand;
   use MooseX::App::Command; # important
-  extends qw(MyApp); # purely optional, only if you want to use global options from base class
+  extends qw(MyApp); # optional, only if you want to use global options from base class
   
   parameter 'some_parameter' => (
       is            => 'rw',
@@ -217,7 +217,8 @@ MooseX-App is a highly customizeable helper to write user-friendly
 command line applications without having to worry about most of the annoying 
 things usually involved. Just take any existing L<Moose> class, add a single 
 line (C<use MooseX-App qw(PluginA PluginB ...);>) and create one class
-for each command in an underlying namespace.
+for each command in an underlying namespace. Options and positional parameters
+can be defined as simple L<Moose> accessors.
 
 MooseX-App will then take care of
 
@@ -225,7 +226,7 @@ MooseX-App will then take care of
 
 =item * Finding, loading and initializing the command classes
 
-=item * Creating automated help and documentation from pod and attributes
+=item * Creating automated help and documentation from modules POD and attributes
 
 =item * Reading, encoding and validating the command line options and positional parameters entered by the user
 
@@ -322,7 +323,10 @@ Enables fuzzy matching of commands and attributes. Is turned on by default.
 
 If strict is enabled the programm will terminate with an error message if
 superfluous/unknown positional parameters are supplied. If disabled all 
-extra parameters will be copied to the L<extra_argv> attribute.
+extra parameters will be copied to the L<extra_argv> attribute. 
+
+The command_strict config in the command classes allows to set this option
+individually for each command.
 
 =head2 app_command_name
 
@@ -408,7 +412,23 @@ Handle typos in command names
 
 Adds a command to display the version and license of your application
 
+=item * L<MooseX::App::Plugin::Man>
+
+Display full manpage
+
 =back
+
+=head1 CAVEATS & KNOWN BUGS
+
+Startup time may be an issue. If you do not require plugins and ability for
+fine grained customisation then you should probably use L<MooX::Options> 
+or L<MooX::Cmd>.
+
+In some cases - especially when using non-standard class inheritance - you may
+end up with command classes lacking the help attribute. In this case you need
+to include the following line in your base class
+
+ with qw(MooseX::App::Role::Common);
 
 =head1 SEE ALSO
 
@@ -417,7 +437,8 @@ MooseX::App command line application.
 
 For alternatives you can check out
 
-L<MooseX::App::Cmd>, L<MooseX::Getopt>, L<MooX::Options> and L<App::Cmd>
+L<MooseX::App::Cmd>, L<MooseX::Getopt>, L<MooX::Options>, 
+L<MooX::Cmd>  and L<App::Cmd>
 
 =head1 SUPPORT
 
@@ -442,7 +463,7 @@ Michael G, Thomas Klausner, Yanick Champoux, Edward Baudrez
 
 =head1 COPYRIGHT
 
-MooseX::App is Copyright (c) 2012 Maroš Kollár.
+MooseX::App is Copyright (c) 2012-13 Maroš Kollár.
 
 This library is free software and may be distributed under the same terms as 
 perl itself. The full text of the licence can be found in the LICENCE file 

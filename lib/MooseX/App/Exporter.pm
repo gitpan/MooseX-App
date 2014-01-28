@@ -12,7 +12,7 @@ use MooseX::App::Utils;
 use MooseX::App::ParsedArgv;
 no if $] >= 5.018000, warnings => qw(experimental::smartmatch);
 
-our %PLUGIN_SPEC;
+my %PLUGIN_SPEC;
 
 sub import {
     my ( $class, @imports ) = @_;
@@ -168,5 +168,11 @@ sub command_usage($) {
     my ( $meta, $usage ) = @_;
     return $meta->command_usage($usage);
 }
+
+sub command_strict($) {
+    my ( $meta, $value ) = @_;
+    return $meta->command_strict($value);
+}
+
 
 1;

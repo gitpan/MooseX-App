@@ -133,7 +133,7 @@ sub command_args {
     }
     
     # Handle all unconsumed parameters and options
-    if ($self->app_strict) {
+    if ($self->app_strict || $metaclass->command_strict) {
         foreach my $parameter ($parsed_argv->available('parameter')) {
             unshift(@{$errors},
                 $self->command_message(
@@ -491,7 +491,7 @@ sub command_parser_hints {
     }
     
     if ($self->app_fuzzy) {
-        my $length = max(map { length($_) } keys %names);
+        my $length = max(map { length($_) } keys %names) // 0;
         foreach my $l (reverse(1..$length)) {
             my %tmp;
             foreach my $name (keys %names) {
@@ -602,6 +602,7 @@ sub command_usage_parameters {
         body    => MooseX::App::Utils::format_list(@parameters),
     );
 }
+
 sub command_usage_header {
     my ($self,$command_meta_class) = @_;
     
@@ -741,7 +742,7 @@ MooseX::App::Meta::Role::Class::Base - Meta class role for application base clas
 =head1 DESCRIPTION
 
 This meta class role will automatically be applied to the application base
-class. This documentation is only of interest if you intent to write
+class. This documentation is only of interest if you intend to write
 plugins for MooseX-App.
 
 =head1 ACCESSORS
@@ -765,7 +766,7 @@ be changed via the app_base accessor. Defaults to the base name of $0
 
 =head2 app_fuzzy
 
-Boolean attribute that controlls if command names and attributes should be 
+Boolean flag that controlls if command names and attributes should be 
 matched exactly or fuzzy. Defaults to true.
 
 =head2 app_command_name
@@ -776,6 +777,13 @@ names and attributes. Defaults to &MooseX::App::Utils::class_to_command
 =head2 app_commands
 
 Hashref with command to command class map.
+
+=head2 app_strict
+
+Boolean flag that controls if an application with superfluous/unknown 
+positional parameters should terminate with an error message or not. 
+If disabled all extra parameters will be copied to the L<extra_argv> 
+command class attribute.
 
 =head1 METHODS
 

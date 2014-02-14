@@ -50,6 +50,12 @@ has 'app_command_name' => (
     default     => sub { \&MooseX::App::Utils::class_to_command },
 );
 
+has 'app_prefer_commandline' => (
+    is              => 'rw',
+    isa             => 'Bool',
+    default         => 0,
+);
+
 has 'app_commands' => (
     is          => 'rw',
     isa         => 'HashRef[Str]',
@@ -784,6 +790,12 @@ Boolean flag that controls if an application with superfluous/unknown
 positional parameters should terminate with an error message or not. 
 If disabled all extra parameters will be copied to the L<extra_argv> 
 command class attribute.
+
+=head2 app_prefer_commandline
+
+By default, arguments passed to new_with_command and new_with_options have a 
+higher priority than the command line options. This boolean flag will give 
+the command line an higher priority.
 
 =head1 METHODS
 

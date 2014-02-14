@@ -16,14 +16,24 @@ my $SINGLETON;
 has 'argv' => (
     is              => 'rw',
     isa             => 'ArrayRef[Str]',
-    lazy_build      => 1,
+    default         => sub {
+        my @argv;
+        @argv = eval {
+            require I18N::Langinfo;
+            I18N::Langinfo->import(qw(langinfo CODESET));
+            my $codeset = langinfo(CODESET());
+            # TODO Not sure if this is the right place?
+            binmode(STDOUT, ":encoding(UTF-8)")
+                if $codeset =~ m/^UTF-?8$/i;
+            return map { decode($codeset,$_) } @ARGV;
+        };
+        # Fallback to standard
+        if ($@) {
+            @argv = @ARGV;
+        }
+        return \@argv;
+    },
 );
-
-#has 'fuzzy' => (
-#    is              => 'rw',
-#    isa             => 'Bool',
-#    required        => 1,
-#);
 
 has 'hints' => (
     is              => 'rw',
@@ -159,25 +169,6 @@ sub consume {
         return $element;
     }  
     return; 
-}
-
-sub _build_argv {
-    my @argv;
-    
-    @argv = eval {
-        require I18N::Langinfo;
-        I18N::Langinfo->import(qw(langinfo CODESET));
-        my $codeset = langinfo(CODESET());
-        # TODO Not sure if this is the right place?
-        binmode(STDOUT, ":encoding(UTF-8)")
-            if $codeset =~ m/^UTF-?8$/i;
-        return map { decode($codeset,$_) } @ARGV;
-    };
-    # Fallback to standard
-    if ($@) {
-        @argv = @ARGV;
-    }
-    return \@argv;
 }
 
 sub extra {

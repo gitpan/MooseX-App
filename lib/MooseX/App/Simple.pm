@@ -7,12 +7,10 @@ use strict;
 use warnings;
 
 use Moose::Exporter;
-use MooseX::App::Exporter qw(app_base app_fuzzy app_strict option parameter command_short_description command_long_description command_usage command_strict);
+use MooseX::App::Exporter qw(app_base app_fuzzy app_strict app_prefer_commandline option parameter command_short_description command_long_description command_usage command_strict);
 use MooseX::App::Meta::Role::Attribute::Option;
 use MooseX::App::Message::Envelope;
 use Scalar::Util qw(blessed);
-
-our $VERSION = '1.15';
 
 my ($IMPORT,$UNIMPORT,$INIT_META) = Moose::Exporter->build_import_methods(
     with_meta           => [ qw(app_base app_fuzzy app_strict option parameter command_short_description command_long_description command_usage command_strict) ],
@@ -72,12 +70,8 @@ sub new_with_options {
         Moose->throw_error('new_with_command got invalid extra arguments');
     }
     
-    # Get ARGV
-    my $parsed_argv = MooseX::App::ParsedArgv->new(
-        argv        => \@ARGV,
-        fuzzy       => $class->meta->app_fuzzy,
-    );
-
+    my $parsed_argv = MooseX::App::ParsedArgv->instance();
+        
     return $class->initialize_command_class($class,%args);
 }
 

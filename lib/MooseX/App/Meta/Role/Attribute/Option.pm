@@ -99,7 +99,7 @@ sub cmd_is_bool {
         return 1;
     }
     
-    return undef
+    return undef;
 }
 
 sub cmd_usage_description {
@@ -265,7 +265,7 @@ Extra option tags displayed in the usage information (in brackets)
 
 =head2 cmd_position
 
-Indicates the order of the parameters
+Override the order of the parameters in the help text.
 
 =head2 cmd_split
 

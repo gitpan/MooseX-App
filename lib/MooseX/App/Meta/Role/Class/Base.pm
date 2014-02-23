@@ -22,7 +22,8 @@ has 'app_messageclass' => (
 
 has 'app_namespace' => (
     is          => 'rw',
-    isa         => 'Str',
+    isa         => 'MooseX::App::Types::List',
+    coerce      => 1,
     lazy_build  => 1,
 );
 
@@ -51,9 +52,9 @@ has 'app_command_name' => (
 );
 
 has 'app_prefer_commandline' => (
-    is              => 'rw',
-    isa             => 'Bool',
-    default         => 0,
+    is          => 'rw',
+    isa         => 'Bool',
+    default     => 0,
 );
 
 has 'app_commands' => (
@@ -74,19 +75,29 @@ sub _build_app_messageclass {
 
 sub _build_app_namespace {
     my ($self) = @_;
-    return $self->name;
+    return [ $self->name ];
 }
 
 sub _build_app_commands {
     my ($self) = @_;
     
+    my @list;
+    foreach my $namespace ( @{ $self->app_namespace } ) {
+        push(@list,$self->command_scan_namespace($namespace));
+    }
+    
+    return { @list };
+}
+
+sub command_scan_namespace {
+    my ($self,$namespace) = @_;
+    
     my $mpo = Module::Pluggable::Object->new(
-        search_path => [ $self->app_namespace ],
+        search_path => [ $namespace ],
     );
     
-    my $namespace = $self->app_namespace;
     my $commandsub = $self->app_command_name;
-    
+
     my %return;
     foreach my $command_class ($mpo->plugins) {
         my $command_class_name =  substr($command_class,length($namespace)+2);
@@ -102,7 +113,7 @@ sub _build_app_commands {
         $return{$command} = $command_class;
     }
     
-    return \%return;
+    return %return;
 }
 
 sub command_args {

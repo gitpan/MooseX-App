@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 our $AUTHORITY = 'cpan:MAROS';
-our $VERSION = 1.24;
+our $VERSION = 1.25;
 
 use MooseX::App::Meta::Role::Attribute::Option;
 use MooseX::App::Exporter qw(app_base app_fuzzy app_strict app_prefer_commandline option parameter);
@@ -53,9 +53,9 @@ sub app_command_name(&) {
     return $meta->app_command_name($namesub);
 }
 
-sub app_namespace($) {
-    my ( $meta, $name ) = @_;
-    return $meta->app_namespace($name);
+sub app_namespace(@) {
+    my ( $meta, @namespaces ) = @_;
+    return $meta->app_namespace( \@namespaces );
 }
 
 sub new_with_command {
@@ -305,10 +305,11 @@ be changed via the app_base function.
 
 =head2 app_namespace
 
- app_namespace 'MyApp::Commands';
+ app_namespace 'MyApp::Commands', 'YourApp::MoreCommands';
 
 Usually MooseX::App will take the package name of the base class as the 
-namespace for commands. This namespace can be changed.
+namespace for commands. This namespace can be changed and you can add
+several other namespaces.
 
 =head2 app_fuzzy
 
@@ -336,7 +337,7 @@ individually for each command.
  app_command_name {
      my ($package) = shift;
      # munge package name;
-     return $command_name
+     return $command_name;
  };
 
 This sub can be used to control how package names should be translated
@@ -352,7 +353,7 @@ Carries all parameters from @ARGV that were not consumed.
 
 =head2 help_flag
 
-Help flag option
+Help flag that is set when help was requested.
 
 =head1 ATTRIBUTE OPTIONS
 
@@ -463,7 +464,7 @@ your report as I make changes.
 
 In no particular order: Andrew Jones, George Hartzell, Steve Nolte, 
 Michael G, Thomas Klausner, Yanick Champoux, Edward Baudrez, David Golden,
-J.R. Mash
+J.R. Mash, Thilo Fester
 
 =head1 COPYRIGHT
 

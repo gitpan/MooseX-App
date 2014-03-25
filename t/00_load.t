@@ -38,12 +38,13 @@ use_ok( 'MooseX::App::Role::Common');
 SKIP :{
     my $ok = eval {
         Class::Load::load_class('Term::ANSIColor');
+        Class::Load::load_class('IO::Interactive');
         use_ok( 'MooseX::App::Plugin::Color' );
         use_ok( 'MooseX::App::Message::BlockColor' );
         use_ok( 'MooseX::App::Plugin::Color::Meta::Class');
     };
     unless ($ok) {
-        skip "Term::ANSIColor is not installed",3;
+        skip "Term::ANSIColor and/or IO::Interactive are not installed",3;
     }
 }
 

@@ -10,13 +10,13 @@ our $AUTHORITY = 'cpan:MAROS';
 our $VERSION = 1.27;
 
 use Moose::Exporter;
-use MooseX::App::Exporter qw(app_base app_fuzzy app_strict app_prefer_commandline option parameter command_short_description command_long_description command_usage command_strict);
+use MooseX::App::Exporter qw(app_usage app_description app_base app_fuzzy app_strict app_prefer_commandline option parameter command_short_description command_long_description command_usage command_strict);
 use MooseX::App::Meta::Role::Attribute::Option;
 use MooseX::App::Message::Envelope;
 use Scalar::Util qw(blessed);
 
 my ($IMPORT,$UNIMPORT,$INIT_META) = Moose::Exporter->build_import_methods(
-    with_meta           => [ qw(app_base app_fuzzy app_strict option parameter command_short_description command_long_description command_usage command_strict) ],
+    with_meta           => [ qw(app_usage app_description app_base app_fuzzy app_strict option parameter command_short_description command_long_description command_usage command_strict) ],
     also                => [ 'Moose' ],
     as_is               => [ 'new_with_options' ],
     install             => [ 'unimport', 'init_meta' ],
@@ -44,7 +44,7 @@ sub init_meta {
         class               => [
             'MooseX::App::Meta::Role::Class::Base',
             'MooseX::App::Meta::Role::Class::Simple',
-            'MooseX::App::Meta::Role::Class::Command'
+            'MooseX::App::Meta::Role::Class::Documentation'
         ],
         attribute           => [
             'MooseX::App::Meta::Role::Attribute::Option'
@@ -125,8 +125,8 @@ And then in some simple wrapper script:
 =head1 DESCRIPTION
 
 MooseX-App-Simple works basically just as MooseX-App, however it does 
-not search for commands and assumes that you have all options defined
-in the current class.
+not search for commands and assumes that you have all options and parameters 
+defined in the current class.
 
 Read the L<Tutorial|MooseX::App::Tutorial> for getting started with a simple 
 MooseX::App command line application.

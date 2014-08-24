@@ -1,6 +1,6 @@
 # -*- perl -*-
 
-# t/06_plugin_env.t - Test env plugin
+# t/06_plugin_env.t - Test env
 
 use Test::Most tests => 4+1;
 use Test::NoWarnings;
@@ -10,7 +10,7 @@ use lib 't/testlib';
 use Test01;
 
 subtest 'Command with argv' => sub {
-   MooseX::App::ParsedArgv->new(argv => [qw(command_a --command_local1 11 --global 1)]);
+    MooseX::App::ParsedArgv->new(argv => [qw(command_a --command_local1 11 --global 1)]);
     my $test01 = Test01->new_with_command;
     isa_ok($test01,'Test01::CommandA');
     is($test01->command_local1,'11','Arg from command config');
@@ -37,5 +37,5 @@ subtest 'Env not passing type constraint' => sub {
     local $ENV{LOCAL1} = 'aa';
     my $test01 = Test01->new_with_command;
     isa_ok($test01,'MooseX::App::Message::Envelope');
-    is($test01->blocks->[0]->header,"Invalid value for 'command_local1'","Message ok");
+    is($test01->blocks->[0]->header,"Invalid environment value for 'LOCAL1'","Message ok");
 };

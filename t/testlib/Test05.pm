@@ -1,7 +1,7 @@
 package Test05;
 
 #use Moose;
-use MooseX::App::Simple qw(Config Env);
+use MooseX::App::Simple qw(Config);
 app_fuzzy 1;
 
 option 'some_option' => (
@@ -25,3 +25,11 @@ sub run {
 }
 
 1;
+
+=head1 DESCRIPTION
+
+this is how we use this command
+
+=cut
+
+

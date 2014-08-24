@@ -9,9 +9,9 @@ use namespace::autoclean;
 use Moose::Role;
 
 around 'command_proto' => sub {
-    my ($orig,$self,$metaclass,$processed_argv) = @_;
+    my ($orig,$self,$metaclass) = @_;
     
-    my ($result,$errors) = $self->$orig($metaclass,$processed_argv);
+    my ($result,$errors) = $self->$orig($metaclass);
     delete $result->{config}
         unless defined $result->{config};
     
@@ -58,7 +58,7 @@ sub proto_config {
     
     # Lopp all attributes
     
-    foreach my $attribute ($self->command_usage_attributes($metaclass)) {
+    foreach my $attribute ($self->command_usage_attributes($metaclass,'all')) {
         my $attribute_name = $attribute->name;
         next
             if $attribute_name eq 'config' || $attribute_name eq 'help_flag';

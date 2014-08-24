@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 our $AUTHORITY = 'cpan:MAROS';
-our $VERSION = 1.29;
+our $VERSION = '1.30';
 
 use MooseX::App::Meta::Role::Attribute::Option;
 use MooseX::App::Exporter qw(app_usage app_description app_base app_fuzzy app_strict app_prefer_commandline option parameter);
@@ -69,8 +69,8 @@ sub new_with_command {
     
     my $meta = $class->meta;
     my $metameta = $meta->meta;
-    # TODO Fix this check
-    Moose->throw_error('new_with_command may only be called from the application base package:'.$class.'->'.$meta)
+    
+    Moose->throw_error('new_with_command may only be called from the application base package:'.$class)
         if $metameta->does_role('MooseX::App::Meta::Role::Class::Command')
         || ! $metameta->does_role('MooseX::App::Meta::Role::Class::Base');
         
@@ -89,19 +89,21 @@ sub new_with_command {
     my $parsed_argv = MooseX::App::ParsedArgv->instance();
     my $first_argv = $parsed_argv->first_argv;
     
+    # Requested help
+    if (defined $first_argv 
+        && lc($first_argv) =~ m/^(help|h|\?|usage|-h|--help|-\?|--usage)$/) {
+        return MooseX::App::Message::Envelope->new(
+            $meta->command_usage_global(),
+        );
     # No args
-    if (! defined $first_argv
-        || $first_argv =~ m/^\s*$/) {
+    } elsif (! defined $first_argv
+        || $first_argv =~ m/^\s*$/
+        || $first_argv =~ m/^-{1,2}\w/) {
         return MooseX::App::Message::Envelope->new(
             $meta->command_message(
                 header          => "Missing command", # LOCALIZE
                 type            => "error",
             ),
-            $meta->command_usage_global(),
-        );
-    # Requested help
-    } elsif (lc($first_argv) =~ m/^(help|h|\?|usage)$/) {
-        return MooseX::App::Message::Envelope->new(
             $meta->command_usage_global(),
         );
     # Looks like a command
@@ -233,11 +235,11 @@ MooseX-App will then
 =item * Find, load and initialise the command classes (see L<MooseX-App-Simple>
 for single command applications)
 
-=item * Create automated help and documentation from modules POD and 
-attributes metadata
+=item * Create automated help and documentation from modules POD as well as
+attributes metadata and type constraints
 
 =item * Read, encode and validate the command line options and positional 
-parameters entered by the user from @ARGV (and possibly %ENV)
+parameters entered by the user from @ARGV and %ENV
 
 =item * Provide helpful error messages if user input cannot be validated (
 either missing or wrong attributes or Moose type constraints not satisfied)
@@ -275,6 +277,14 @@ This is equivalent to
       isa           => 'Str',
       traits        => ['AppOption'],
       cmd_type      => 'parameter',
+  );
+
+Furthermore all options and parameters can also be suplied vie %ENV
+
+  option 'some_option' => (
+      is            => 'rw',
+      isa           => 'Str',
+      cmd_env       => 'SOME_OPTION',
   );
 
 Read the L<Tutorial|MooseX::App::Tutorial> for getting started with a simple 
@@ -339,6 +349,15 @@ extra parameters will be copied to the L<extra_argv> attribute.
 The command_strict config in the command classes allows one to set this option
 individually for each command.
 
+=head2 app_prefer_commandline
+
+ app_prefer_commandline(0); # default
+ or
+ app_prefer_commandline(1);
+
+Specifies if parameters/options supplied via @ARGV,%ENV should take precedence
+over arguments passed to new_with_command.
+
 =head2 app_command_name
 
  app_command_name {
@@ -388,6 +407,8 @@ Help flag that is set when help was requested.
 
 =item * cmd_position - Option/Parameter order
 
+=item * cmd_env - Read options from %ENV
+
 =back
 
 Refer to L<MooseX::App::Meta::Role::Attribute::Option> for detailed 
@@ -419,6 +440,7 @@ and should be provided if possible:
 
 The behaviour of MooseX-App can be customised with plugins. To load a
 plugin just pass a list of plugin names after the C<use MooseX-App> statement.
+(Attention: order sometimes matters)
 
  use MooseX::App qw(PluginA PluginB);
 
@@ -440,11 +462,11 @@ Config files for MooseX::App applications
 
 =item * L<MooseX::App::Plugin::ConfigHome>
 
-Config files in users home directory
+Search config files in users home directory
 
-=item * L<MooseX::App::Plugin::Env>
+=item * L<MooseX::App::Plugin::Term>
 
-Read options from environment
+Prompt user for options and parameters that were not provided via options or params
 
 =item * L<MooseX::App::Plugin::Typo>
 
@@ -465,9 +487,10 @@ for documentation on how to create your own plugins.
 
 =head1 CAVEATS & KNOWN BUGS
 
-Startup time may be an issue. If you do not require plugins and ability for
-fine grained customisation then you should probably use L<MooX::Options> 
-or L<MooX::Cmd>. 
+Startup time may be an issue - escpecially if you load many plugins. If you do
+not require the functionality of plugins and ability for fine grained 
+customisation (or Moose for that matter) then you should probably 
+use L<MooX::Options> or L<MooX::Cmd>. 
 
 In some cases - especially when using non-standard class inheritance - you may
 end up with command classes lacking the help attribute. In this case you need

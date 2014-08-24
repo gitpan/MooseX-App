@@ -96,11 +96,11 @@ DESCRIPTION
     *   Find, load and initialise the command classes (see MooseX-App-Simple
         for single command applications)
 
-    *   Create automated help and documentation from modules POD and
-        attributes metadata
+    *   Create automated help and documentation from modules POD as well as
+        attributes metadata and type constraints
 
     *   Read, encode and validate the command line options and positional
-        parameters entered by the user from @ARGV (and possibly %ENV)
+        parameters entered by the user from @ARGV and %ENV
 
     *   Provide helpful error messages if user input cannot be validated (
         either missing or wrong attributes or Moose type constraints not
@@ -137,6 +137,14 @@ DESCRIPTION
           isa           => 'Str',
           traits        => ['AppOption'],
           cmd_type      => 'parameter',
+      );
+
+    Furthermore all options and parameters can also be suplied vie %ENV
+
+      option 'some_option' => (
+          is            => 'rw',
+          isa           => 'Str',
+          cmd_env       => 'SOME_OPTION',
       );
 
     Read the Tutorial for getting started with a simple MooseX::App command
@@ -194,6 +202,14 @@ GLOBAL OPTIONS
     The command_strict config in the command classes allows one to set this
     option individually for each command.
 
+  app_prefer_commandline
+     app_prefer_commandline(0); # default
+     or
+     app_prefer_commandline(1);
+
+    Specifies if parameters/options supplied via @ARGV,%ENV should take
+    precedence over arguments passed to new_with_command.
+
   app_command_name
      app_command_name {
          my ($package) = shift;
@@ -235,6 +251,8 @@ ATTRIBUTE OPTIONS
 
     *   cmd_position - Option/Parameter order
 
+    *   cmd_env - Read options from %ENV
+
     Refer to MooseX::App::Meta::Role::Attribute::Option for detailed
     documentation.
 
@@ -259,7 +277,7 @@ METADATA
 PLUGINS
     The behaviour of MooseX-App can be customised with plugins. To load a
     plugin just pass a list of plugin names after the "use MooseX-App"
-    statement.
+    statement. (Attention: order sometimes matters)
 
      use MooseX::App qw(PluginA PluginB);
 
@@ -280,11 +298,12 @@ PLUGINS
 
     *   MooseX::App::Plugin::ConfigHome
 
-        Config files in users home directory
+        Search config files in users home directory
 
-    *   MooseX::App::Plugin::Env
+    *   MooseX::App::Plugin::Term
 
-        Read options from environment
+        Prompt user for options and parameters that were not provided via
+        options or params
 
     *   MooseX::App::Plugin::Typo
 
@@ -303,9 +322,10 @@ PLUGINS
     your own plugins.
 
 CAVEATS & KNOWN BUGS
-    Startup time may be an issue. If you do not require plugins and ability
-    for fine grained customisation then you should probably use
-    MooX::Options or MooX::Cmd.
+    Startup time may be an issue - escpecially if you load many plugins. If
+    you do not require the functionality of plugins and ability for fine
+    grained customisation (or Moose for that matter) then you should
+    probably use MooX::Options or MooX::Cmd.
 
     In some cases - especially when using non-standard class inheritance -
     you may end up with command classes lacking the help attribute. In this

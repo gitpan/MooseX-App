@@ -39,6 +39,12 @@ has 'cmd_split' => (
     predicate   => 'has_cmd_split',
 );
 
+has 'cmd_env' => (
+    is          => 'rw',
+    isa         => 'MooseX::App::Types::Env',
+    predicate   => 'has_cmd_env',
+);
+
 has 'cmd_position' => (
     is => 'rw',
     isa => 'Int',
@@ -63,10 +69,9 @@ around 'new' => sub {
     return $self;
 };
 
-
 sub cmd_is_bool {
     my ($self) = @_; 
-   
+    
     if ($self->has_type_constraint
         && $self->type_constraint->is_a_type_of('Bool')) {
         
@@ -85,7 +90,73 @@ sub cmd_is_bool {
         return 1;
     }
     
-    return undef
+    my $ud = undef; # Make perlcritic happy
+    return $ud;
+}
+
+sub cmd_type_constraint_description {
+    my ($self,$type_constraint,$singular) = @_;
+    
+    $type_constraint //= $self->type_constraint;
+    $singular //= 1;
+    
+    if ($type_constraint->isa('Moose::Meta::TypeConstraint::Enum')) {
+        return 'one of these values: '.join(', ',@{$type_constraint->values});
+    } elsif ($type_constraint->isa('Moose::Meta::TypeConstraint::Parameterized')) {
+        my $from = $type_constraint->parameterized_from;
+        if ($from->is_a_type_of('ArrayRef')) {
+            return $self->cmd_type_constraint_description($type_constraint->type_parameter);
+        } elsif ($from->is_a_type_of('HashRef')) {
+            return 'key-value pairs of '.$self->cmd_type_constraint_description($type_constraint->type_parameter,0);
+        }
+    # TODO union
+    } elsif ($type_constraint->equals('Int')) {
+        return $singular ? 'an integer':'integers'; # LOCALIZE
+    } elsif ($type_constraint->equals('Num')) {
+        return $singular ? 'a number':'numbers'; # LOCALIZE
+    } elsif ($type_constraint->equals('Str')) {
+        return $singular ? 'a string':'strings';
+    } elsif ($type_constraint->equals('HashRef')) {
+        return 'key-value pairs'; # LOCALIZE
+    }
+    
+    if ($type_constraint->has_parent) {
+        return $self->cmd_type_constraint_description($type_constraint->parent);
+    }
+    
+    return;
+}
+
+sub cmd_type_constraint_check {
+    my ($self,$value) = @_;
+    
+    return 
+        unless ($self->has_type_constraint);
+    my $type_constraint = $self->type_constraint;
+    
+    # Check type constraints
+    unless ($type_constraint->check($value)) {
+        if (ref($value) eq 'ARRAY') {
+            $value = join(', ',@$value);
+        } elsif (ref($value) eq 'HASH') {
+            $value = join(', ',map { $_.'='.$value->{$_} } keys %$value)
+        }
+        
+        # We have a custom message
+        if ($type_constraint->has_message) {
+            return $type_constraint->get_message($value);
+        # No message
+        } else {
+            my $message_human = $self->cmd_type_constraint_description($type_constraint);
+            if (defined $message_human) {
+                return "Value must be ". $message_human ." (not '$value')";
+            } else {
+                return $type_constraint->get_message($value);
+            }
+        }
+    }
+    
+    return;
 }
 
 sub cmd_usage_description {
@@ -188,6 +259,11 @@ sub cmd_tags_list {
         }
     }
     
+    if ($self->can('has_cmd_env')
+        && $self->has_cmd_env) {
+        push(@tags,'Env: '.$self->cmd_env)
+    }
+    
     if ($self->can('cmd_tags')
         && $self->can('cmd_tags')
         && $self->has_cmd_tags) {
@@ -233,6 +309,7 @@ use the following attributes in option or parameter definitions.
      cmd_flag           => 'myopt',
      cmd_aliases        => [qw(mopt localopt)],
      cmd_tags           => [qw(Important!)],
+     cmd_env            => 'MY_OPTION',
      cmd_position       => 1,
      cmd_split          => qr/,/,
  );
@@ -258,6 +335,12 @@ used for plugin developmemt
 =item * parameter - Positional parameter command line value
 
 =back
+
+=head2 cmd_env
+
+Environment variable name (only uppercase letters, numeric and underscores
+allowed). If variable was not specified otherwise the value will be
+taken from %ENV.
 
 =head2 cmd_aliases
 
@@ -326,6 +409,18 @@ of the attribute:
 =item * false: Has a boolean type constraint, and a true default value
 
 =back
+
+=head2 cmd_type_constraint_check
+
+ $attribute->cmd_type_constraint_check($value)
+
+Checks the type constraint. Returns an error message if the check fails
+
+=head2 cmd_type_constraint_description
+
+ $attribute->cmd_type_constraint_description($type_constraint,$singular)
+
+Creates a description of the selected type constraint.
 
 =cut
 
